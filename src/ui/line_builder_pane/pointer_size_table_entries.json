@@ -1,0 +1,12 @@
+[{
+	"ca": "0000",
+	"size": "Lower 4 bits"
+},
+{
+	"ca": "0001",
+	"size": "Higher 4 bits"
+},
+{
+	"ca": "0010",
+	"size": "8 bits"
+}]

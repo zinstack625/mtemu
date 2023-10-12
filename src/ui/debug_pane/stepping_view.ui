@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="SteppingView" parent="GtkBox">
+    <property name="orientation">horizontal</property>
+    <property name="spacing">10</property>
+    <child>
+      <object class="GtkButton" id="reset_button">
+        <property name="label">Reset</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton" id="step_button">
+        <property name="label">Step</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkButton" id="run_button">
+        <property name="label">Run</property>
+      </object>
+    </child>
+  </template>
+</interface>

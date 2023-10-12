@@ -1,0 +1,16 @@
+[{
+	"ca": "0000",
+	"interface": "PORT0 (IN)"
+},
+{
+	"ca": "0001",
+	"interface": "PORT1 (IN)"
+},
+{
+	"ca": "0010",
+	"interface": "PORT2 (OUT)"
+},
+{
+	"ca": "0011",
+	"interface": "PORT3 (OUT)"
+}]

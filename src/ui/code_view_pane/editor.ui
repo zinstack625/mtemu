@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="InstructionEditor" parent="GtkBox">
+      <property name="orientation">vertical</property>
+      <property name="spacing">20</property>
+        <child>
+          <object class="GtkBox" id="command_edit_word">
+            <property name="spacing">10</property>
+            <child>
+              <object class="GtkBox" id="addr_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">AR</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="addr"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="jump_type_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">CA</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="jump_type"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="load_type_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">M1</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="load_type"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="op_type_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">M0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="op_type"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="instr_type_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">C0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="instr_type"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="a_arg_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">A</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="a_arg"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="b_arg_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">B</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="b_arg"/>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="d_arg_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">D</property>
+                  </object>
+                </child>
+              <child>
+                <object class="GtkEntry" id="d_arg"/>
+              </child>
+            </object>
+          </child>
+        </object>
+    </child>
+  </template>
+</interface>

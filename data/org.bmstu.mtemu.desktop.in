@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=mtemu
+Exec=mtemu
+Icon=org.bmstu.mtemu
+Terminal=false
+Type=Application
+Categories=GTK;
+StartupNotify=true

@@ -1,0 +1,16 @@
+[package]
+name = "mtemu"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+gettext-rs = { version = "0.7", features = ["gettext-system"] }
+gtk = { version = "0.7", package = "gtk4" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+paste = "1.0"
+
+[dependencies.adw]
+package = "libadwaita"
+version = "0.5"
+features = ["v1_4"]

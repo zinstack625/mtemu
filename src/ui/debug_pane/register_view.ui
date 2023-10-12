@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="RegisterView" parent="GtkBox">
+    <property name="spacing">10</property>
+    <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">PQ</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="pq_reg"></object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkGrid">
+            <property name="column-homogeneous">true</property>
+            <property name="row-homogeneous">true</property>
+            <property name="column-spacing">10</property>
+            <property name="row-spacing">10</property>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R0</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r0_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">0</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R1</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r1_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">0</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R2</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r2_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">0</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R3</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r3_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">0</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R4</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r4_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">1</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R5</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r5_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">2</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R6</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r6_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">1</property>
+                  <property name="column">3</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R7</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r7_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">0</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R8</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r8_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">1</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R9</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r9_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">2</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R10</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r10_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">2</property>
+                  <property name="column">3</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R11</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r11_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">0</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R12</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r12_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">1</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R13</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r13_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">2</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R14</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r14_reg"></object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <layout>
+                  <property name="row">3</property>
+                  <property name="column">3</property>
+                </layout>
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">R15</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="r15_reg"></object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+  </template>
+</interface>

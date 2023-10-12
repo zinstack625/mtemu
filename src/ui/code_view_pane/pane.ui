@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="CodeViewPane" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="spacing">20</property>
+    <child>
+      <object class="GtkScrolledWindow">
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+        <property name="propagate-natural-width">true</property>
+        <property name="propagate-natural-height">true</property>
+        <child>
+          <object class="GtkColumnView" id="code_list">
+            <property name="vexpand">true</property>
+            <property name="show-row-separators">true</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="code_list_addr">
+                <property name="title">Address</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">code_list_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="code_list_command">
+                <property name="title">Command</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">code_list_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="code_list_jump">
+                <property name="title">Jump</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">code_list_menu</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+
+    </child>
+    <child>
+      <object class="InstructionEditor" id="instruction_editor"></object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">20</property>
+        <child>
+          <object class="GtkButton" id="delete_button">
+            <property name="label">Delete</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="add_button">
+            <property name="label">Add</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+  <menu id="code_list_menu">
+    <section>
+      <item>
+        <attribute name="label">Address</attribute>
+      </item>
+      <item>
+        <attribute name="label">Command</attribute>
+      </item>
+      <item>
+        <attribute name="label">Jump</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

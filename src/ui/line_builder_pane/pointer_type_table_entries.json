@@ -1,0 +1,16 @@
+[{
+	"ca": "0000",
+	"ptr": "Memory; P=P"
+},
+{
+	"ca": "0001",
+	"ptr": "Memory; P=P+1"
+},
+{
+	"ca": "0010",
+	"ptr": "Memory; P=P-1"
+},
+{
+	"ca": "1000",
+	"ptr": "Register"
+}]

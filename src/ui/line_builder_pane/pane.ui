@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="LineBuilderPane" parent="GtkBox">
+    <property name="orientation">vertical</property>
+    <property name="spacing">10</property>
+    <child>
+      <object class="GtkGrid">
+        <property name="row-spacing">5</property>
+        <property name="column-spacing">5</property>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">0</property>
+              <property name="row-span">4</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="jump_type">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="jump_type_code">
+                <property name="title">CA</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">jump_type_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="jump_type_name">
+                <property name="title">Jump</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">jump_type_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">1</property>
+              <property name="row-span">4</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="alu_instr_type">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="instr_type_code">
+                <property name="title">Code</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">instr_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="instr_type_name">
+                <property name="title">Function</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">instr_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="instr_type_add_bit">
+                <property name="title">C0</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">instr_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="pointer_type">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="pointer_type_code">
+                <property name="title">Code</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">pointer_type_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="pointer_type_name">
+                <property name="title">Pointer type</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">pointer_type_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">1</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="interface_type">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="interface_type_code">
+                <property name="title">Code</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">interface_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="interface_type_name">
+                <property name="title">Interface</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">interface_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">2</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="pointer_size">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="pointer_size_code">
+                <property name="title">Code</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">pointer_size_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="pointer_size_name">
+                <property name="title">Pointer size</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">pointer_size_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="m_select">
+            <property name="orientation">horizontal</property>
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <layout>
+              <property name="row">3</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+              <object class="GtkCheckButton">
+                <property name="label">M0</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkCheckButton">
+                <property name="label">M1</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparator">
+        <property name="orientation">horizontal</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkGrid">
+        <property name="column-spacing">5</property>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">0</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="op_type">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="op_type_code">
+                <property name="title">Code</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">op_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="op_type_r">
+                <property name="title">R</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">op_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="op_type_s">
+                <property name="title">S</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">op_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="propagate-natural-height">true</property>
+            <layout>
+              <property name="row">0</property>
+              <property name="column">1</property>
+            </layout>
+            <child>
+          <object class="GtkColumnView" id="load_type">
+            <property name="reorderable">false</property>
+            <child>
+              <object class="GtkColumnViewColumn" id="load_type_code">
+                <property name="title">Code</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">load_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="load_type_name">
+                <property name="title">Load type</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">load_menu</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+  <menu id="jump_type_menu">
+    <section>
+      <item></item>
+      <item></item>
+    </section>
+  </menu>
+  <menu id="instr_menu">
+    <section>
+      <item>
+        <attribute name="label">Code</attribute>
+      </item>
+      <item>
+        <attribute name="label">Function</attribute>
+      </item>
+      <item>
+        <attribute name="label">C0</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="pointer_type_menu">
+    <section>
+      <item>
+        <attribute name="label">Code</attribute>
+      </item>
+      <item>
+        <attribute name="label">Pointer type</attribute>
+      </item>
+    </section>
+  </menu>
+    <menu id="interface_menu">
+    <section>
+      <item>
+        <attribute name="label">Code</attribute>
+      </item>
+      <item>
+        <attribute name="label">Interface</attribute>
+      </item>
+    </section>
+  </menu>
+    <menu id="pointer_size_menu">
+    <section>
+      <item>
+        <attribute name="label">Code</attribute>
+      </item>
+      <item>
+        <attribute name="label">Pointer size</attribute>
+      </item>
+    </section>
+  </menu>
+    <menu id="op_menu">
+    <section>
+      <item>
+        <attribute name="label">Code</attribute>
+      </item>
+      <item>
+        <attribute name="label">R</attribute>
+      </item>
+      <item>
+        <attribute name="label">S</attribute>
+      </item>
+    </section>
+  </menu>
+  <menu id="load_menu">
+    <section>
+      <item>
+        <attribute name="label">Code</attribute>
+      </item>
+      <item>
+        <attribute name="label">Load type</attribute>
+      </item>
+    </section>
+  </menu>
+</interface>

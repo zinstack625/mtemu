@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="OutputView" parent="GtkBox">
+    <property name="spacing">10</property>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkGrid">
+        <property name="column-spacing">10</property>
+        <property name="row-spacing">10</property>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">0</property>
+            </layout>
+            <child>
+          <object class="GtkLabel" id="ovr_flag">
+
+            <property name="label">OVR=0</property>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">1</property>
+            </layout>
+            <child>
+          <object class="GtkLabel" id="c4_flag">
+
+            <property name="label">C4=0</property>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+          <object class="GtkLabel" id="f3_flag">
+
+            <property name="label">F3=0</property>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">3</property>
+            </layout>
+            <child>
+          <object class="GtkLabel" id="z_flag">
+
+            <property name="label">Z=0</property>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">1</property>
+              <property name="column">0</property>
+            </layout>
+            <child>
+          <object class="GtkLabel" id="g_flag">
+
+            <property name="label">/G=0</property>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">1</property>
+              <property name="column">1</property>
+            </layout>
+            <child>
+          <object class="GtkLabel" id="p_flag">
+
+            <property name="label">/P=0</property>
+          </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkSeparator">
+        <property name="orientation">horizontal</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkGrid">
+        <property name="hexpand">true</property>
+        <property name="column-homogeneous">true</property>
+        <property name="column-spacing">10</property>
+        <property name="row-spacing">10</property>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">0</property>
+            </layout>
+            <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">F</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="f_out">
+                <property name="label">0000</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">1</property>
+            </layout>
+            <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">Y</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="y_out">
+                <property name="label">0000</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">0</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">PC</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="pc_out">
+                <property name="label">0000</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">1</property>
+              <property name="column">0</property>
+            </layout>
+            <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">SP</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="sp_out">
+                <property name="label">0000</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">1</property>
+              <property name="column">1</property>
+            </layout>
+            <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">MP</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="mp_out">
+                <property name="label">0000</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkFrame">
+            <layout>
+              <property name="row">1</property>
+              <property name="column">2</property>
+            </layout>
+            <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="label">Port</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkSeparator">
+                <property name="orientation">horizontal</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkLabel" id="port_out">
+                <property name="label">0000</property>
+              </object>
+            </child>
+          </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+  

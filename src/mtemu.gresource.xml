@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/bmstu/mtemu/">
+    <file preprocess="xml-stripblanks">ui/window.ui</file>
+    <file preprocess="xml-stripblanks">ui/code_view_pane/pane.ui</file>
+    <file preprocess="xml-stripblanks">ui/code_view_pane/editor.ui</file>
+    <file preprocess="xml-stripblanks">ui/debug_pane/pane.ui</file>
+    <file preprocess="xml-stripblanks">ui/debug_pane/stepping_view.ui</file>
+    <file preprocess="xml-stripblanks">ui/debug_pane/output_view.ui</file>
+    <file preprocess="xml-stripblanks">ui/debug_pane/register_view.ui</file>
+    <file preprocess="xml-stripblanks">ui/line_builder_pane/pane.ui</file>
+    <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+    <file>ui/line_builder_pane/jump_table_entries.json</file>
+    <file>ui/line_builder_pane/instr_table_entries.json</file>
+    <file>ui/line_builder_pane/pointer_type_table_entries.json</file>
+    <file>ui/line_builder_pane/interface_type_table_entries.json</file>
+    <file>ui/line_builder_pane/pointer_size_table_entries.json</file>
+    <file>ui/line_builder_pane/operand_type_table_entries.json</file>
+    <file>ui/line_builder_pane/load_type_table_entries.json</file>
+  </gresource>
+</gresources>
+
