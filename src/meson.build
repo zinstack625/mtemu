@@ -28,6 +28,8 @@ run_command(
   check: true
 )
 
+subdir('emulator')
+
 cargo_bin  = find_program('cargo')
 cargo_opt  = [ '--manifest-path', meson.project_source_root() / 'Cargo.toml' ]
 cargo_opt += [ '--target-dir', meson.project_build_root()  / 'src' ]
