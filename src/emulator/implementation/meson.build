@@ -18,9 +18,31 @@ engine = custom_target(
 	install_dir: 'subdir',
 )
 
+pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
+
+conf = configuration_data()
+conf.set_quoted('PKGDATADIR', pkgdatadir)
+
+configure_file(
+    input: 'config.h.in',
+    output: 'config.h',
+    configuration: conf
+)
+
 experiments = executable(
 	'shim_experiments',
 	'shim_experiments.c',
 	install: false,
+	dependencies: [dependency('mono-2')],
+)
+
+engine_files = files(
+	'emulator_shim.c',
+)
+
+engine_shim = library(
+	'engine',
+	engine_files,
+	install: true,
 	dependencies: [dependency('mono-2')],
 )
