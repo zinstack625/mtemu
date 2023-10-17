@@ -29,20 +29,26 @@ configure_file(
     configuration: conf
 )
 
-experiments = executable(
-	'shim_experiments',
-	'shim_experiments.c',
-	install: false,
-	dependencies: [dependency('mono-2')],
-)
-
 engine_files = files(
 	'emulator_shim.c',
 )
+
+shim_inc_dirs = [
+  './',
+]
 
 engine_shim = library(
 	'engine',
 	engine_files,
 	install: true,
+	include_directories: shim_inc_dirs,
 	dependencies: [dependency('mono-2')],
+)
+
+experiments = executable(
+	'shim_experiments',
+	'shim_experiments.c',
+	install: false,
+	dependencies: [dependency('mono-2')],
+	link_with: engine_shim,
 )

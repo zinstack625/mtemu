@@ -1213,5 +1213,43 @@ namespace mtemu
                 return OpenRaw(input);
             }
         }
+
+        public byte[] ExportRaw()
+        {
+            int callsSize = CallsCount() * (sizeof(UInt16) + Call.COMMENT_MAX_SIZE);
+            int commandsSize = CommandsCount() * (commandSize_ + 1);
+            byte[] output = new byte[fileHeader_.Length + callsSize + commandsSize + 2 * sizeof(UInt16)];
+
+            int seek = 0;
+            for (; seek < fileHeader_.Length; ++seek) {
+                output[seek] = fileHeader_[seek];
+            }
+
+            Call[] callsArr = calls_.ToArray();
+            output[seek++] = (byte) (calls_.Count >> 8);
+            output[seek++] = (byte) calls_.Count;
+
+            for (int i = 0; i < callsArr.Length; ++i) {
+                output[seek++] = (byte) (callsArr[i].GetAddress() >> 8);
+                output[seek++] = (byte) callsArr[i].GetAddress();
+
+                byte[] comment = Encoding.UTF8.GetBytes(callsArr[i].GetComment());
+                for (int c = 0; c < Call.COMMENT_MAX_SIZE; ++c) {
+                    output[seek++] = (byte) (c < comment.Length ? comment[c] : 0);
+                }
+            }
+
+            Command[] commandsArr = commands_.ToArray();
+            output[seek++] = (byte) (commands_.Count >> 8);
+            output[seek++] = (byte) commands_.Count;
+
+            for (int i = 0; i < commandsArr.Length; ++i) {
+                output[seek++] = (byte) (commandsArr[i].isOffset ? 1 : 0);
+                for (int j = 0; j < commandSize_; ++j) {
+                    output[seek++] = (byte) ((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
+                }
+            }
+            return output;
+        }
     }
 }
