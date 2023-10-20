@@ -20,84 +20,84 @@
 #ifndef EMULATOR_SHIM_H_
 #define EMULATOR_SHIM_H_
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <mono/metadata/appdomain.h>
 #include <mono/metadata/debug-helpers.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
-    int32_t isOffset;
-    int32_t number_;
-    int32_t* words;
-    size_t words_len;
+  int32_t isOffset;
+  int32_t number_;
+  int32_t *words;
+  size_t words_len;
 } Command;
 
 typedef struct {
-    int32_t address_;
-    char* comment_;
+  int32_t address_;
+  char *comment_;
 } Call;
 
 typedef struct {
-    MonoDomain* dom;
-    MonoImage* im;
-    MonoObject* emul;
+  MonoDomain *dom;
+  MonoImage *im;
+  MonoObject *emul;
 } Emulator;
 
 typedef enum {
-    OK,
-    NO_COMMANDS,
-    INCORRECT_COMMAND,
-    LOOP,
-    END,
+  OK,
+  NO_COMMANDS,
+  INCORRECT_COMMAND,
+  LOOP,
+  END,
 } ResultCode;
 
 Emulator create_emulator();
-void emulator_reset(Emulator*);
-Command emulator_get_command(Emulator*, int32_t);
-bool emulator_add_command(Emulator*, int32_t, Command);
-bool emulator_update_command(Emulator*, int32_t, Command);
-Command emulator_last_command(Emulator*);
-int* emulator_remove_command(Emulator*, int32_t);
-int32_t emulator_commands_count(Emulator*);
-Command emulator_executed_command(Emulator*);
-ResultCode emulator_exec_one(Emulator*);
-ResultCode emulator_exec_one_call(Emulator*);
-ResultCode emulator_exec_all(Emulator*);
-int32_t emulator_get_next_index(Emulator*);
-int32_t emulator_get_prev_index(Emulator*);
-int32_t emulator_get_call_index(Emulator*);
-int32_t emulator_get_pc(Emulator*);
-int32_t emulator_set_pc(Emulator*, int32_t);
-int32_t emulator_get_sp(Emulator*);
-int32_t emulator_set_sp(Emulator*, int32_t);
-int32_t emulator_get_stack_value(Emulator*);
-int32_t emulator_get_mp(Emulator*);
-int32_t emulator_get_port(Emulator*);
-int32_t emulator_get_mem_value(Emulator*);
-int32_t emulator_get_reg_q(Emulator*);
-int32_t emulator_get_reg_value(Emulator*, int32_t);
-int32_t emulator_get_f(Emulator*);
-int32_t emulator_get_y(Emulator*);
-int32_t emulator_get_prev_reg_q(Emulator*);
-int32_t emulator_get_prev_reg_a(Emulator*);
-int32_t emulator_get_prev_reg_b(Emulator*);
-int32_t emulator_get_r(Emulator*);
-int32_t emulator_get_s(Emulator*);
-int32_t emulator_get_z(Emulator*);
-int32_t emulator_get_f3(Emulator*);
-int32_t emulator_get_c4(Emulator*);
-int32_t emulator_get_ovr(Emulator*);
-int32_t emulator_get_g(Emulator*);
-int32_t emulator_get_p(Emulator*);
-void emulator_add_call(Emulator*, int32_t, Call);
-Call emulator_get_call(Emulator*, int32_t);
-void emulator_update_call(Emulator*, int32_t, Call);
-void emulator_remove_call(Emulator*, int32_t);
-int32_t emulator_calls_count(Emulator*);
-Call emulator_last_call(Emulator*);
-bool emulator_open_raw(Emulator*, uint8_t*, size_t);
-char* command_get_name(Emulator*, Command);
-void free_obj(void*);
+void emulator_reset(Emulator *);
+Command emulator_get_command(Emulator *, int32_t);
+bool emulator_add_command(Emulator *, int32_t, Command);
+bool emulator_update_command(Emulator *, int32_t, Command);
+Command emulator_last_command(Emulator *);
+int *emulator_remove_command(Emulator *, int32_t);
+int32_t emulator_commands_count(Emulator *);
+Command emulator_executed_command(Emulator *);
+ResultCode emulator_exec_one(Emulator *);
+ResultCode emulator_exec_one_call(Emulator *);
+ResultCode emulator_exec_all(Emulator *);
+int32_t emulator_get_next_index(Emulator *);
+int32_t emulator_get_prev_index(Emulator *);
+int32_t emulator_get_call_index(Emulator *);
+int32_t emulator_get_pc(Emulator *);
+int32_t emulator_set_pc(Emulator *, int32_t);
+int32_t emulator_get_sp(Emulator *);
+int32_t emulator_set_sp(Emulator *, int32_t);
+int32_t emulator_get_stack_value(Emulator *);
+int32_t emulator_get_mp(Emulator *);
+int32_t emulator_get_port(Emulator *);
+int32_t emulator_get_mem_value(Emulator *);
+int32_t emulator_get_reg_q(Emulator *);
+int32_t emulator_get_reg_value(Emulator *, int32_t);
+int32_t emulator_get_f(Emulator *);
+int32_t emulator_get_y(Emulator *);
+int32_t emulator_get_prev_reg_q(Emulator *);
+int32_t emulator_get_prev_reg_a(Emulator *);
+int32_t emulator_get_prev_reg_b(Emulator *);
+int32_t emulator_get_r(Emulator *);
+int32_t emulator_get_s(Emulator *);
+int32_t emulator_get_z(Emulator *);
+int32_t emulator_get_f3(Emulator *);
+int32_t emulator_get_c4(Emulator *);
+int32_t emulator_get_ovr(Emulator *);
+int32_t emulator_get_g(Emulator *);
+int32_t emulator_get_p(Emulator *);
+void emulator_add_call(Emulator *, int32_t, Call);
+Call emulator_get_call(Emulator *, int32_t);
+void emulator_update_call(Emulator *, int32_t, Call);
+void emulator_remove_call(Emulator *, int32_t);
+int32_t emulator_calls_count(Emulator *);
+Call emulator_last_call(Emulator *);
+bool emulator_open_raw(Emulator *, uint8_t *, size_t);
+char *command_get_name(Emulator *, Command);
+void free_obj(void *);
 
 #endif // EMULATOR_SHIM_H_
