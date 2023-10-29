@@ -31,16 +31,18 @@ macro_rules! col_static_factory {
         {
             let factory = gtk::SignalListItemFactory::new();
             factory.connect_setup(move |_, obj| {
+                let obj = obj.downcast_ref::<gtk::ListItem>().unwrap();
                 obj.set_child(Some(&gtk::Label::builder().build()));
             });
             factory.connect_bind(move |_, obj| {
-            let item = obj.item()
-                .and_downcast::<$x>()
-                .expect("Invalid type in model!");
-            obj.child()
-                .and_downcast::<gtk::Label>()
-                .unwrap()
-                .set_label(&item.$y());
+                let obj = obj.downcast_ref::<gtk::ListItem>().unwrap();
+                let item = obj.item()
+                              .and_downcast::<$x>()
+                    .expect("Invalid type in model!");
+                obj.child()
+                   .and_downcast::<gtk::Label>()
+                    .unwrap()
+                    .set_label(&item.$y());
             });
             factory
         }

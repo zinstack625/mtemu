@@ -20,6 +20,7 @@
 mod application;
 mod config;
 mod ui;
+mod emulator;
 
 use self::application::MtemuApplication;
 
@@ -43,7 +44,9 @@ fn main() -> glib::ExitCode {
     // Create a new GtkApplication. The application manages our main loop,
     // application windows, integration with the window manager/compositor, and
     // desktop features such as file opening and single-instance applications.
-    let app = MtemuApplication::new("org.bmstu.mtemu", &gio::ApplicationFlags::empty());
+    let app = MtemuApplication::new("org.bmstu.mtemu",
+                                    &gio::ApplicationFlags::empty(),
+                                    Box::new(emulator::OriginalImplementation::new()));
 
     // Run the application. This function will block until the application
     // exits. Upon return, we have our exit code to return to the shell. (This

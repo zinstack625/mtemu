@@ -19,11 +19,19 @@
 
 use adw::subclass::prelude::*;
 use gtk::{gio, glib};
+
 use super::code_view_pane::CodeViewPane;
 use super::debug_pane::DebugPane;
 use super::line_builder_pane::LineBuilderPane;
 
 mod imp {
+
+    use std::cell::Cell;
+
+    use gtk::prelude::ObjectExt;
+
+    use crate::application::MtemuApplication;
+
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -34,6 +42,7 @@ mod imp {
         pub header_bar: TemplateChild<adw::HeaderBar>,
         #[template_child]
         pub code_view_pane: TemplateChild<CodeViewPane>,
+        // pub code_view_pane: CodeViewPane,
         #[template_child]
         pub debug_pane: TemplateChild<DebugPane>,
         #[template_child]
@@ -55,7 +64,12 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for MtemuWindow {}
+    impl ObjectImpl for MtemuWindow {
+        fn constructed(&self) {
+            self.parent_constructed();
+
+        }
+    }
     impl WidgetImpl for MtemuWindow {}
     impl WindowImpl for MtemuWindow {}
     impl ApplicationWindowImpl for MtemuWindow {}

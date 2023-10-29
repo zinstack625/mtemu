@@ -25,7 +25,14 @@ mod imp {
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/org/bmstu/mtemu/ui/debug_pane/stepping_view.ui")]
-    pub struct SteppingView {}
+    pub struct SteppingView {
+        #[template_child]
+        pub reset_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub step_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub run_button: TemplateChild<gtk::Button>,
+    }
 
     #[glib::object_subclass]
     impl ObjectSubclass for SteppingView {
@@ -50,12 +57,4 @@ mod imp {
 glib::wrapper! {
     pub struct SteppingView(ObjectSubclass<imp::SteppingView>)
         @extends gtk::Widget,        @implements gio::ActionGroup, gio::ActionMap;
-}
-
-impl SteppingView {
-    pub fn new<P: glib::IsA<gtk::Application>>(application: &P) -> Self {
-        glib::Object::builder()
-            .property("application", application)
-            .build()
-    }
 }

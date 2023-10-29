@@ -12,6 +12,7 @@
         <child>
           <object class="GtkColumnView" id="code_list">
             <property name="vexpand">true</property>
+            <property name="reorderable">false</property>
             <property name="show-row-separators">true</property>
             <child>
               <object class="GtkColumnViewColumn" id="code_list_addr">

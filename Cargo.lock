@@ -550,6 +550,7 @@ dependencies = [
  "gettext-rs",
  "gtk4",
  "libadwaita",
+ "libc",
  "paste",
  "serde",
  "serde_json",

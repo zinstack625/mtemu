@@ -27,6 +27,8 @@ use stepping_view::SteppingView;
 use output_view::OutputView;
 use register_view::RegisterView;
 
+use crate::emulator;
+
 mod imp {
     use super::*;
 
@@ -60,6 +62,11 @@ mod imp {
     impl ObjectImpl for DebugPane {}
     impl WidgetImpl for DebugPane {}
     impl BoxImpl for DebugPane {}
+    impl DebugPane {
+        pub fn renew_state(&self, new_state: &emulator::State) {
+            self.output_view.renew_state(new_state);
+        }
+    }
 }
 
 glib::wrapper! {
@@ -72,5 +79,8 @@ impl DebugPane {
         glib::Object::builder()
             .property("application", application)
             .build()
+    }
+    pub fn renew_state(&self, new_state: &emulator::State) {
+        self.imp().renew_state(new_state);
     }
 }

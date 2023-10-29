@@ -18,6 +18,6 @@
  */
 
  pub mod window;
- mod code_view_pane;
+ pub mod code_view_pane;
  mod debug_pane;
  mod line_builder_pane;
