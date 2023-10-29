@@ -52,13 +52,14 @@ typedef enum {
   END,
 } ResultCode;
 
-Emulator create_emulator();
+Emulator *create_emulator();
+void destroy_emulator(Emulator *);
 void emulator_reset(Emulator *);
 Command emulator_get_command(Emulator *, int32_t);
 bool emulator_add_command(Emulator *, int32_t, Command);
 bool emulator_update_command(Emulator *, int32_t, Command);
 Command emulator_last_command(Emulator *);
-int *emulator_remove_command(Emulator *, int32_t);
+int32_t *emulator_remove_command(Emulator *, int32_t);
 int32_t emulator_commands_count(Emulator *);
 Command emulator_executed_command(Emulator *);
 ResultCode emulator_exec_one(Emulator *);

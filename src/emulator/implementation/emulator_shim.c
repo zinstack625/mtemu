@@ -33,14 +33,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Emulator create_emulator() {
-  Emulator instance;
-  instance.dom = mono_jit_init("mtemu");
+Emulator* create_emulator() {
+  Emulator* instance = malloc(sizeof(Emulator));
+  instance->dom = mono_jit_init("mtemu");
   /* MonoAssembly *mtemu_emu = mono_domain_assembly_open( */
   /*     instance.dom, PKGDATADIR "/engine.dll"); */
   MonoAssembly *mtemu_emu = mono_domain_assembly_open(
-      instance.dom, "src/emulator/implementation/engine.dll");
-  instance.im = mono_assembly_get_image(mtemu_emu);
+      instance->dom, "src/emulator/implementation/engine.dll");
+  instance->im = mono_assembly_get_image(mtemu_emu);
   /* TODO: currently broken for whatever reason, will dig deeper later */
   /* MonoClass *PortExtender = mono_class_from_name(im, "mtemu",
    * "PortExtender"); */
@@ -50,8 +50,8 @@ Emulator create_emulator() {
   /* MonoMethod* PortExtenderCtor =
    * mono_method_desc_search_in_class(PortExtenderCtorDesc, PortExtender); */
   /* mono_runtime_invoke(PortExtenderCtor, port_extender, NULL, NULL); */
-  MonoClass *Emulator = mono_class_from_name(instance.im, "mtemu", "Emulator");
-  instance.emul = mono_object_new(instance.dom, Emulator);
+  MonoClass *Emulator = mono_class_from_name(instance->im, "mtemu", "Emulator");
+  instance->emul = mono_object_new(instance->dom, Emulator);
   // MonoMethodDesc* EmulatorCtorDesc =
   // mono_method_desc_new("mtemu.Emulator:.ctor(PortExtender)", 1);
   MonoMethodDesc *EmulatorCtorDesc =
@@ -61,10 +61,15 @@ Emulator create_emulator() {
   /* void* args[1]; */
   /* args[0] = &port_extender; */
   /* mono_runtime_invoke(EmulatorCtor, emulator, args, NULL); */
-  mono_runtime_invoke(EmulatorCtor, instance.emul, NULL, NULL);
+  mono_runtime_invoke(EmulatorCtor, instance->emul, NULL, NULL);
   mono_method_desc_free(EmulatorCtorDesc);
   mono_free_method(EmulatorCtor);
   return instance;
+}
+
+void destroy_emulator(Emulator* inst) {
+  mono_jit_cleanup(inst->dom);
+  free(inst);
 }
 
 void emulator_reset(Emulator *inst) {
@@ -358,7 +363,7 @@ int32_t emulator_set_sp(Emulator *inst, int32_t value) {
 int32_t emulator_get_stack_value(Emulator *inst) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *GetStackValueDesc =
-      mono_method_desc_new("mtemu.Emulator:GetStackValue()", 1);
+      mono_method_desc_new("mtemu.Emulator:GetStackValue(int)", 1);
   MonoMethod *GetStackValue =
       mono_method_desc_search_in_class(GetStackValueDesc, emulator_class);
   int32_t res = *(int32_t *)mono_object_unbox(
@@ -422,7 +427,7 @@ int32_t emulator_get_reg_q(Emulator *inst) {
 int32_t emulator_get_reg_value(Emulator *inst, int32_t index) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *GetRegValueDesc =
-      mono_method_desc_new("mtemu.Emulator:GetRegValue()", 1);
+      mono_method_desc_new("mtemu.Emulator:GetRegValue(int)", 1);
   MonoMethod *GetRegValue =
       mono_method_desc_search_in_class(GetRegValueDesc, emulator_class);
   void *args[1] = {&index};
