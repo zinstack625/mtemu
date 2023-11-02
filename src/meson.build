@@ -53,6 +53,6 @@ cargo_build = custom_target(
   command: [
     'env', cargo_env,
     cargo_bin, 'build',
-    cargo_opt, '&&', 'cp', 'src' / rust_target / meson.project_name(), '@OUTPUT@',
+    cargo_opt,
   ],
 )
