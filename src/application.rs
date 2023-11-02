@@ -19,6 +19,7 @@
 
 
 use std::cell::RefCell;
+use std::io::BufWriter;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::rc::Rc;
@@ -33,9 +34,9 @@ use crate::ui::window::MtemuWindow;
 
 mod imp {
     use std::{cell::RefCell, sync::Arc, rc::Rc};
-    use gtk::glib::{once_cell::sync::Lazy, MainContext};
+    use gtk::{glib::{once_cell::sync::Lazy, MainContext}, SingleSelection, MultiSelection};
 
-    use crate::emulator;
+    use crate::{emulator, ui::{self, line_builder_pane, window}};
 
     use super::*;
 
@@ -64,7 +65,8 @@ mod imp {
             let obj = self.obj();
             obj.setup_gactions();
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
-            //self.connect_cmd_list();
+            obj.set_accels_for_action("app.open-file", &["<primary>o"]);
+            obj.set_accels_for_action("app.save-file", &["<primary>s"]);
         }
 
         fn signals() -> &'static [glib::subclass::Signal] {
@@ -231,7 +233,21 @@ impl MtemuApplication {
         let open_file_action = gio::ActionEntry::builder("open-file")
             .activate(move |app: &Self, _, _| app.show_open_file())
             .build();
-        self.add_action_entries([quit_action, about_action, open_file_action]);
+        let save_file_action = gio::ActionEntry::builder("save-file")
+            .activate(move |app: &Self, _, _| app.show_save_file())
+            .build();
+        let show_debug_action = gio::ActionEntry::builder("show-debug")
+            .activate(move |app: &Self, _, _| app.toggle_debug_pane())
+            .build();
+        let show_builder_action = gio::ActionEntry::builder("show-builder")
+            .activate(move |app: &Self, _, _| app.toggle_builder_pane())
+            .build();
+        self.add_action_entries([quit_action,
+                                 about_action,
+                                 open_file_action,
+                                 save_file_action,
+                                 show_debug_action,
+                                 show_builder_action]);
     }
 
     fn show_about(&self) {
@@ -252,6 +268,11 @@ impl MtemuApplication {
     fn show_open_file(&self) {
         let window = self.active_window().unwrap();
         let open_file = gtk::FileDialog::new();
+        let filter = gtk::FileFilter::new();
+        filter.add_pattern("*.mte");
+        let filters = gio::ListStore::new::<gtk::FileFilter>();
+        filters.append(&filter);
+        open_file.set_filters(Some(&filters));
         let emul = self.get_emulator();
         let obj = self.clone();
         open_file.open(Some(&window.clone()), gio::Cancellable::NONE, move |res| {
@@ -276,6 +297,47 @@ impl MtemuApplication {
             });
             obj.emit_by_name::<()>("commands-appeared", &[&commands]);
         });
+    }
+    fn show_save_file(&self) {
+        let window = self.active_window().unwrap();
+        let open_file = gtk::FileDialog::new();
+        let filter = gtk::FileFilter::new();
+        filter.add_pattern("*.mte");
+        let filters = gio::ListStore::new::<gtk::FileFilter>();
+        filters.append(&filter);
+        open_file.set_filters(Some(&filters));
+        let emul = self.get_emulator();
+        let obj = self.clone();
+        open_file.save(Some(&window.clone()), gio::Cancellable::NONE, move |res| {
+            let Ok(file) = res else { return };
+            let path = file.path().expect("Unable to get file path");
+            let file = std::fs::File::create(path).expect("Cannot create file");
+            let mut writer = BufWriter::new(file);
+            let bytes = {
+                let Some(ref emul) = *emul.borrow() else { return };
+                emul.export_raw()
+            };
+            writer.write_all(&bytes);
+            // let commands = imp::BoxedCommands({
+            //     let Some(ref emul) = *emul.borrow() else { return };
+            //     let mut commands = Vec::<crate::emulator::Command>::with_capacity(emul.commands_count());
+            //     for i in 0..emul.commands_count() {
+            //         commands.push(emul.get_command(i));
+            //     }
+            //     Rc::new(commands)
+            // });
+            //obj.emit_by_name::<()>("commands-appeared", &[&commands]);
+        });
+    }
+    fn toggle_debug_pane(&self) {
+        let Some(window) = self.active_window().and_downcast::<MtemuWindow>() else { return };
+        let visible = window.imp().debug_pane.property::<bool>("visible");
+        window.imp().debug_pane.set_property("visible", !visible);
+    }
+    fn toggle_builder_pane(&self) {
+        let Some(window) = self.active_window().and_downcast::<MtemuWindow>() else { return };
+        let visible = window.imp().line_builder_pane.property::<bool>("visible");
+        window.imp().line_builder_pane.set_property("visible", !visible);
     }
     pub fn set_emulator(&self, emul: Box<dyn crate::emulator::MT1804Emulator>) {
         self.imp().set_emulator(emul);
