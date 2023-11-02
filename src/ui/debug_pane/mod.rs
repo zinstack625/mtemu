@@ -65,6 +65,7 @@ mod imp {
     impl DebugPane {
         pub fn renew_state(&self, new_state: &emulator::State) {
             self.output_view.renew_state(new_state);
+            self.register_view.renew_state(new_state);
         }
     }
 }

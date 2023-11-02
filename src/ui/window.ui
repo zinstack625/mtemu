@@ -10,7 +10,7 @@
         <child type="top">
           <object class="AdwHeaderBar" id="header_bar">
             <child>
-              <object class="GtkSwitch"></object>
+              <object class="GtkSwitch" id="instr_repr_sw"></object>
             </child>
             <child type="end">
               <object class="GtkMenuButton">
@@ -30,9 +30,7 @@
             <property name="margin-end">0</property>
             <property name="margin-bottom">0</property>
             <child>
-              <object class="CodeViewPane" id="code_view_pane">
-                <property name="width-request">500</property>
-              </object>
+              <object class="CodeViewPane" id="code_view_pane"></object>
             </child>
             <child>
               <object class="GtkSeparator">
@@ -62,6 +60,18 @@
       <item>
         <attribute name="label" translatable="yes">_Open file</attribute>
         <attribute name="action">app.open-file</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Save file</attribute>
+        <attribute name="action">app.save-file</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Show debug pane</attribute>
+        <attribute name="action">app.show-debug</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Show builder pane</attribute>
+        <attribute name="action">app.show-builder</attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>

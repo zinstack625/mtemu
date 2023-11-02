@@ -17,7 +17,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
- pub mod window;
- pub mod code_view_pane;
- mod debug_pane;
- mod line_builder_pane;
+pub mod window;
+pub mod code_view_pane;
+pub mod debug_pane;
+pub mod line_builder_pane;

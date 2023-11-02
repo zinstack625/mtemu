@@ -26,13 +26,22 @@
               <object class="GtkColumnViewColumn" id="code_list_command">
                 <property name="title">Command</property>
                 <property name="resizable">false</property>
-                <property name="expand">false</property>
+                <property name="expand">true</property>
                 <property name="header-menu">code_list_menu</property>
               </object>
             </child>
             <child>
               <object class="GtkColumnViewColumn" id="code_list_jump">
                 <property name="title">Jump</property>
+                <property name="resizable">false</property>
+                <property name="expand">false</property>
+                <property name="header-menu">code_list_menu</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColumnViewColumn" id="code_list_command_binary">
+                <property name="visible">false</property>
+                <property name="title">Command (binary)</property>
                 <property name="resizable">false</property>
                 <property name="expand">false</property>
                 <property name="header-menu">code_list_menu</property>
@@ -61,6 +70,11 @@
         <child>
           <object class="GtkButton" id="add_button">
             <property name="label">Add</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="update_button">
+            <property name="label">Update</property>
           </object>
         </child>
       </object>

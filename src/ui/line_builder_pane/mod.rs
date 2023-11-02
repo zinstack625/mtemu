@@ -26,6 +26,8 @@ use gtk::gio::functions;
 use gtk::gio::ResourceLookupFlags;
 use models::*;
 
+use crate::emulator;
+
 macro_rules! col_static_factory {
     ($x:ty, $y:ident) => {
         {
@@ -72,9 +74,118 @@ macro_rules! parse_res {
 }
 
 mod imp {
-    use std::collections::HashMap;
+    use std::{collections::HashMap, cell::Cell};
+
+    use gtk::{
+        glib::Properties,
+        prelude::*,
+    };
 
     use super::*;
+
+    // enum JumpType {
+    //     JNZ,
+    //     JMP,
+    //     JNXT,
+    //     END,
+    //     CLNZ,
+    //     CALL,
+    //     RET,
+    //     JSP,
+    //     JSNZ,
+    //     PUSH,
+    //     POP,
+    //     JSNC4,
+    //     JZ,
+    //     JF3,
+    //     JOVR,
+    //     JC4,
+    //     Unknown = 255,
+    // }
+    // enum FlagType {
+    //     M0,
+    //     M1,
+    //     C0,
+    //     Unknown = 255,
+    // }
+    // enum FuncType {
+    //     RPlusS = 0,
+    //     SMinusRMinus1 = 1,
+    //     RMinusSMinus1 = 2,
+    //     ROrS = 3,
+    //     RAndS = 4,
+    //     NoRAndS = 5,
+    //     RXorS = 6,
+    //     REqS = 7,
+    //     RPlusSPlus1 = 8,
+    //     SMinusR = 9,
+    //     RMinusS = 10,
+    //     SetPointer = 11,
+    //     StoreMemory = 12,
+    //     LoadMemory = 13,
+    //     StoreDevice = 14,
+    //     LoadDevice = 15,
+    //     Unknown = 255,
+    // }
+    // enum FuncArgs {
+    //     AAndPQ,
+    //     AAndB,
+    //     ZeroAndQ,
+    //     ZeroAndB,
+    //     ZeroAndA,
+    //     DAndA,
+    //     DAndQ,
+    //     DAndZero,
+    //     Unknown = 255,
+    // }
+    // enum FuncLoad {
+    //     FInQ,
+    //     NoLoad,
+    //     FInBAndAInY,
+    //     FInB,
+    //     SRFInBAndSRQInQ,
+    //     SRFInB,
+    //     SLFInBAndSLQInQ,
+    //     SLFInB,
+    //     Unknown = 255,
+    // }
+
+    #[derive(Default, Properties)]
+    #[properties(wrapper_type = super::CommandRepr)]
+    pub struct CommandRepr {
+        #[property(get, set)]
+        pub addr: Cell<u32>,
+        #[property(get, set)]
+        pub jump: Cell<u8>,
+        #[property(get, set)]
+        pub flag: Cell<u8>,
+        #[property(get, set)]
+        pub func: Cell<u8>,
+        #[property(get, set)]
+        pub args: Cell<u8>,
+        #[property(get, set)]
+        pub load: Cell<u8>,
+        #[property(get, set)]
+        pub pointer: Cell<u8>,
+        #[property(get, set)]
+        pub pointer_size: Cell<u8>,
+        #[property(get, set)]
+        pub a_arg: Cell<u8>,
+        #[property(get, set)]
+        pub b_arg: Cell<u8>,
+        #[property(get, set)]
+        pub d_arg: Cell<u8>,
+    }
+
+    #[glib::object_subclass]
+    impl ObjectSubclass for CommandRepr {
+        const NAME: &'static str = "EditCommandRepr";
+        type Type = super::CommandRepr;
+        type ParentType = glib::Object;
+    }
+
+    #[glib::derived_properties]
+    impl ObjectImpl for CommandRepr {}
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/org/bmstu/mtemu/ui/line_builder_pane/pane.ui")]
@@ -156,6 +267,38 @@ mod imp {
     impl WidgetImpl for LineBuilderPane {}
     impl BoxImpl for LineBuilderPane {}
     impl LineBuilderPane {
+        pub fn get_command(&self) -> super::CommandRepr {
+            let cmd = super::CommandRepr::new();
+            let Some(selection) = self.jump_type.model() else { return cmd; };
+            cmd.set_jump(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let Some(selection) = self.alu_instr_type.model() else { return cmd; };
+            cmd.set_func(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let Some(selection) = self.pointer_type.model() else { return cmd; };
+            cmd.set_pointer(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let Some(selection) = self.op_type.model() else { return cmd; };
+            cmd.set_args(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let Some(selection) = self.load_type.model() else { return cmd; };
+            cmd.set_load(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let Some(selection) = self.pointer_size.model() else { return cmd; };
+            cmd.set_pointer_size(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            cmd
+        }
+        pub fn renew_command(&self, new_command: &CommandRepr) {
+            let Some(selection) = self.jump_type.model() else { return };
+            selection.select_item(new_command.jump.get() as u32, true);
+            let Some(selection) = self.alu_instr_type.model() else { return };
+            selection.select_item(new_command.func.get() as u32, true);
+            // let Some(selection) = self.pointer_type.model() else { return };
+            // selection.select_item(, unselect_rest)
+            let Some(selection) = self.op_type.model() else { return };
+            selection.select_item(new_command.args.get() as u32, true);
+            let Some(selection) = self.load_type.model() else { return };
+            selection.select_item(new_command.load.get() as u32, true);
+            let Some(selection) = self.pointer_type.model() else { return };
+            selection.select_item(new_command.pointer.get() as u32, true);
+            let Some(selection) = self.pointer_size.model() else { return };
+            selection.select_item(new_command.pointer_size.get() as u32, true);
+        }
         fn prepare_jump_type_table(&self, from_resource: &str) {
             self.jump_type.set_model(
                 Some(&gtk::SingleSelection::new(
@@ -252,10 +395,67 @@ glib::wrapper! {
         @extends gtk::Widget,      @implements gio::ActionGroup, gio::ActionMap;
 }
 
+glib::wrapper! {
+    pub struct CommandRepr(ObjectSubclass<imp::CommandRepr>);
+}
+
+impl CommandRepr {
+    pub fn new() -> Self {
+        glib::Object::builder().build()
+    }
+    pub fn from_command(cmd: emulator::Command) -> Self {
+        let words = cmd.get_words().unwrap();
+        glib::Object::builder()
+            .property("addr", (words[2] & 0b1111) | ((words[1] & 0b1111) << 4) | ((words[0] & 0b1111) << 8))
+            .property("jump", words[3] as u8)
+            .property("flag", words[4] as u8)
+            .property("func", words[5] as u8)
+            .property("args", words[6] as u8)
+            .property("load", words[4] as u8)
+            .property("pointer", {
+                let mut res = words[5];
+                if words[5] == 8 { res = 3; }
+                res as u8
+            }) // 8 => 3 && <3 || -1
+            .property("pointer-size", {
+                words[5] as u8
+            }) // <3 || -1
+            .property("a-arg", words[7] as u8)
+            .property("b-arg", words[8] as u8)
+            .property("d-arg", words[9] as u8)
+            .build()
+    }
+    pub fn get_words(&self) -> [i32;12]  {
+        [
+            ((self.addr() >> 8) & 0b1111) as i32,
+            ((self.addr() >> 4) & 0b1111) as i32,
+            (self.addr() & 0b1111) as i32,
+            self.jump() as i32,
+            self.flag() as i32,
+            self.func() as i32,
+            self.args() as i32,
+            self.load() as i32,
+            self.pointer_size() as i32,
+            self.a_arg() as i32,
+            self.b_arg() as i32,
+            self.d_arg() as i32,
+        ]
+    }
+}
+
 impl LineBuilderPane {
     pub fn new<P: glib::IsA<gtk::Application>>(application: &P) -> Self {
         glib::Object::builder()
             .property("application", application)
             .build()
+    }
+    pub fn renew_command(&self, new_command: &CommandRepr) {
+        self.imp().renew_command(new_command.imp());
+    }
+    pub fn get_words(&self) -> [i32;12] {
+        self.imp().get_command().get_words()
+    }
+    pub fn get_command(&self) -> CommandRepr {
+        self.imp().get_command()
     }
 }

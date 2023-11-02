@@ -15,7 +15,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="addr"/>
+                  <object class="GtkEntry" id="addr">
+                    <property name="width-chars">12</property>
+                    <property name="max-width-chars">12</property>
+                    <property name="max-length">12</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -28,7 +32,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="jump_type"/>
+                  <object class="GtkEntry" id="jump_type">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -41,7 +49,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="load_type"/>
+                  <object class="GtkEntry" id="load_type">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -54,7 +66,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="op_type"/>
+                  <object class="GtkEntry" id="op_type">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -67,7 +83,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="instr_type"/>
+                  <object class="GtkEntry" id="instr_type">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -80,7 +100,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="a_arg"/>
+                  <object class="GtkEntry" id="a_arg">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -93,7 +117,11 @@
                   </object>
                 </child>
                 <child>
-                  <object class="GtkEntry" id="b_arg"/>
+                  <object class="GtkEntry" id="b_arg">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
                 </child>
               </object>
             </child>
@@ -106,7 +134,11 @@
                   </object>
                 </child>
               <child>
-                <object class="GtkEntry" id="d_arg"/>
+                <object class="GtkEntry" id="d_arg">
+                  <property name="width-chars">4</property>
+                  <property name="max-width-chars">4</property>
+                  <property name="max-length">4</property>
+                </object>
               </child>
             </object>
           </child>

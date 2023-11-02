@@ -37,12 +37,12 @@ mod imp {
     #[derive(Debug, Default, gtk::CompositeTemplate)]
     #[template(resource = "/org/bmstu/mtemu/ui/window.ui")]
     pub struct MtemuWindow {
-        // Template widgets
+        #[template_child]
+        pub instr_repr_sw: TemplateChild<gtk::Switch>,
         #[template_child]
         pub header_bar: TemplateChild<adw::HeaderBar>,
         #[template_child]
         pub code_view_pane: TemplateChild<CodeViewPane>,
-        // pub code_view_pane: CodeViewPane,
         #[template_child]
         pub debug_pane: TemplateChild<DebugPane>,
         #[template_child]

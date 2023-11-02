@@ -43,7 +43,9 @@ mod imp {
         #[property(get, set)]
         name: RefCell<String>,
         #[property(get, set)]
-        jump: RefCell<String>
+        jump: RefCell<String>,
+        #[property(get, set)]
+        binary: RefCell<String>,
     }
 
     #[glib::object_subclass]
@@ -58,11 +60,16 @@ mod imp {
     impl CommandRepr {
         pub fn from_command(app: &MtemuApplication, cmd: Command) -> Option<Self> {
             let emul = app.get_emulator();
-            let Some(ref emul) = *emul.borrow_mut() else { return None };
+            let Some(ref emul) = *emul.borrow() else { return None };
+            let mut words = String::new();
+            cmd.get_words().as_ref().unwrap().iter().for_each(|word| {
+               words.push_str(&format!("{:0>4b} ", word & 0b1111));
+            });
             Some(Self {
                 addr: Cell::new(cmd.get_num() as i32),
                 name: RefCell::new(emul.command_get_name(cmd.clone())),
                 jump: RefCell::new(emul.command_get_jump_name(cmd.clone())),
+                binary: RefCell::new(words),
             })
         }
     }
@@ -77,9 +84,17 @@ mod imp {
         #[template_child]
         pub code_list_command: TemplateChild<gtk::ColumnViewColumn>,
         #[template_child]
+        pub code_list_command_binary: TemplateChild<gtk::ColumnViewColumn>,
+        #[template_child]
         pub code_list_jump: TemplateChild<gtk::ColumnViewColumn>,
         #[template_child]
         pub instruction_editor: TemplateChild<InstructionEditor>,
+        #[template_child]
+        pub delete_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub add_button: TemplateChild<gtk::Button>,
+        #[template_child]
+        pub update_button: TemplateChild<gtk::Button>,
     }
 
     #[glib::object_subclass]
@@ -111,6 +126,23 @@ mod imp {
                 .set_model(Some(&gtk::MultiSelection::new(Some(
                     cmds
                 ))))
+        }
+        pub fn get_codes(&self) -> [u8;10] {
+                self.instruction_editor.get_codes()
+        }
+        pub fn show_binary(&self) {
+            self.code_list_command_binary.set_visible(true);
+        }
+        pub fn hide_binary(&self) {
+            self.code_list_command_binary.set_visible(false);
+        }
+        pub fn show_human(&self) {
+            self.code_list_command.set_visible(true);
+            self.code_list_jump.set_visible(true);
+        }
+        pub fn hide_human(&self) {
+            self.code_list_command.set_visible(false);
+            self.code_list_jump.set_visible(false);
         }
         fn instance_factories(&self) {
             self.code_list_addr.set_factory(Some(&{
@@ -172,7 +204,26 @@ mod imp {
                         .set_label(&model.property::<String>("jump"));
                 });
                 factory
-            }))
+            }));
+            self.code_list_command_binary.set_factory(Some(&{
+                let factory = gtk::SignalListItemFactory::new();
+                factory.connect_setup(move |_, obj| {
+                    let item = obj.downcast_ref::<gtk::ListItem>().unwrap();
+                    item.set_child(Some(&gtk::Label::builder().build()));
+                });
+                factory.connect_bind(move |_, obj| {
+                    let item = obj.downcast_ref::<gtk::ListItem>().unwrap();
+                    let model = item
+                        .item()
+                        .and_downcast::<super::CommandRepr>()
+                        .expect("Not a CommandRepr");
+                    item.child()
+                        .and_downcast::<gtk::Label>()
+                        .unwrap()
+                        .set_label(&model.property::<String>("binary"));
+                });
+                factory
+            }));
         }
     }
 }
@@ -180,6 +231,24 @@ mod imp {
 glib::wrapper! {
     pub struct CodeViewPane(ObjectSubclass<imp::CodeViewPane>)
         @extends gtk::Widget,      @implements gio::ActionGroup, gio::ActionMap;
+}
+
+impl CodeViewPane {
+    pub fn show_binary(&self) {
+        self.imp().show_binary();
+    }
+    pub fn hide_binary(&self) {
+        self.imp().hide_binary();
+    }
+    pub fn show_human(&self) {
+        self.imp().show_human();
+    }
+    pub fn hide_human(&self) {
+        self.imp().hide_human();
+    }
+    pub fn get_codes(&self) -> [u8;10] {
+        self.imp().get_codes()
+    }
 }
 
 glib::wrapper! {
@@ -192,11 +261,17 @@ impl CommandRepr {
         let Some(ref emul) = *emul.borrow() else { return glib::Object::builder().build() };
         let number = cmd.get_num();
         let name = emul.command_get_name(cmd.clone());
-        let jump = emul.command_get_jump_name(cmd);
+        let jump = emul.command_get_jump_name(cmd.clone());
+
+        let mut binary = String::new();
+        cmd.get_words().unwrap().iter().for_each(|word| {
+            binary.push_str(&format!("{:0>4b} ", word & 0b1111));
+        });
         glib::Object::builder()
             .property("addr", number as i32)
             .property("name", name)
             .property("jump", jump)
+            .property("binary", binary)
             .build()
     }
 }
