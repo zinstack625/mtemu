@@ -41,6 +41,14 @@ impl Default for Command {
 }
 
 impl Command {
+    pub fn new(pos: i32, words: &mut [i32]) -> Command {
+        Command {
+            isOffset: 0,
+            number_: pos,
+            words: words.as_mut_ptr(),
+            words_len: words.len(),
+        }
+    }
     pub fn get_num(&self) -> usize {
         self.number_ as usize
     }
@@ -113,6 +121,7 @@ extern "C" {
     fn emulator_calls_count(_: *mut Emulator) -> i32;
     fn emulator_last_call(_: *mut Emulator) -> Call;
     fn emulator_open_raw(_: *mut Emulator, _: *mut u8, _: libc::size_t) -> u8;
+    fn emulator_export_raw(_: *mut Emulator, _: *mut *mut u8, _: *mut libc::size_t);
     fn command_get_name(_: *mut Emulator, _: Command) -> *mut libc::c_char;
     fn command_get_jump_name(_: *mut Emulator, _: Command) -> *mut libc::c_char;
     fn free_obj(_: *mut libc::c_void);
@@ -168,6 +177,7 @@ pub trait MT1804Emulator {
     fn call_count(&self) -> usize;
     fn last_call(&self) -> Call;
     fn open_raw(&mut self, bytes: &[u8]);
+    fn export_raw(&self) -> Vec<u8>;
     fn command_get_name(&self, cmd: Command) -> String;
     fn command_get_jump_name(&self, cmd: Command) -> String;
     fn get_state(&self) -> State;
@@ -389,6 +399,17 @@ impl MT1804Emulator for OriginalImplementation {
                 bytes.len(),
             );
         }
+    }
+    fn export_raw(&self) -> Vec<u8> {
+        let mut bytes: *mut u8 = std::ptr::null_mut();
+        let mut bytes_cnt: libc::size_t = 0;
+        unsafe { emulator_export_raw(self.inst.as_ref().unwrap().to_owned(), &mut bytes, &mut bytes_cnt); }
+        let mut bytes_cpy = Vec::<u8>::with_capacity(bytes_cnt);
+        for i in 0..bytes_cnt {
+            unsafe { bytes_cpy.push(bytes.add(i).read()); }
+        }
+        unsafe { libc::free(bytes as *mut libc::c_void); }
+        bytes_cpy
     }
     fn command_get_name(&self, cmd: Command) -> String {
         let name = unsafe { command_get_name(self.inst.as_ref().unwrap().to_owned(), cmd) };

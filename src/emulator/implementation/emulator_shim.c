@@ -149,7 +149,7 @@ MonoObject *command_manage(Emulator *inst, Command command) {
 bool emulator_add_command(Emulator *inst, int32_t index, Command command) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *AddCommandDesc =
-      mono_method_desc_new("mtemu.Emulator:AddCommand(int, Command)", 1);
+      mono_method_desc_new("mtemu.Emulator:AddCommand", 1);
   MonoMethod *AddCommand =
       mono_method_desc_search_in_class(AddCommandDesc, emulator_class);
   void *args[2];
@@ -165,7 +165,7 @@ bool emulator_add_command(Emulator *inst, int32_t index, Command command) {
 bool emulator_update_command(Emulator *inst, int32_t index, Command command) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *UpdateCommandDesc =
-      mono_method_desc_new("mtemu.Emulator:UpdateCommand(int, Command)", 1);
+      mono_method_desc_new("mtemu.Emulator:UpdateCommand", 1);
   MonoMethod *UpdateCommand =
       mono_method_desc_search_in_class(UpdateCommandDesc, emulator_class);
   void *args[2];
@@ -721,12 +721,14 @@ void emulator_export_raw(Emulator *inst, uint8_t **bytes, size_t *bytes_cnt) {
   MonoArray *managed_bytes =
       (MonoArray *)mono_runtime_invoke(ExportRaw, inst->emul, NULL, NULL);
   *bytes_cnt = mono_array_length(managed_bytes);
-  *bytes = malloc(*bytes_cnt * sizeof(uint8_t));
+
+  uint8_t* bytes_local = malloc(*bytes_cnt * sizeof(uint8_t));
   for (size_t i = 0; i < *bytes_cnt; ++i) {
-    *(bytes[i]) = mono_array_get(managed_bytes, uint8_t, i);
+    bytes_local[i] = mono_array_get(managed_bytes, uint8_t, i);
   }
   mono_method_desc_free(ExportRawDesc);
   mono_free_method(ExportRaw);
+  *bytes = bytes_local;
 }
 
 char *command_get_name(Emulator *inst, Command cmd) {
