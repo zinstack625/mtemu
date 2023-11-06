@@ -31,12 +31,13 @@ use gtk::{gio, glib};
 
 use crate::config::VERSION;
 use crate::ui::window::MtemuWindow;
+use crate::ui::PlainCommandRepr;
 
 mod imp {
     use std::{cell::RefCell, sync::Arc, rc::Rc};
     use gtk::{glib::{once_cell::sync::Lazy, MainContext}, SingleSelection, MultiSelection};
 
-    use crate::{emulator, ui::{self, line_builder_pane, window}};
+    use crate::{emulator, ui};
 
     use super::*;
 
@@ -54,6 +55,10 @@ mod imp {
     #[derive(glib::SharedBoxed, Clone, Debug)]
     #[shared_boxed_type(name = "BoxedCommands")]
     pub struct BoxedCommands(pub Rc<Vec<emulator::Command>>);
+
+    #[derive(glib::SharedBoxed, Clone, Debug)]
+    #[shared_boxed_type(name = "BoxedCommand")]
+    pub struct BoxedCommand(pub Rc<emulator::Command>);
 
     #[derive(glib::SharedBoxed, Clone, Debug)]
     #[shared_boxed_type(name = "BoxedState")]
@@ -78,7 +83,7 @@ mod imp {
                      .param_types([BoxedState::static_type()])
                      .build(),
                      glib::subclass::Signal::builder("command-changed")
-                     .param_types([ui::line_builder_pane::CommandRepr::static_type()])
+                     .param_types([BoxedCommand::static_type()])
                      .build()
                 ]
             });
@@ -149,7 +154,7 @@ mod imp {
             app.connect_closure("commands-appeared", false, glib::closure_local!(move |app: super::MtemuApplication, cmds: BoxedCommands| {
                 let model = cmds.0
                     .iter()
-                    .map(|cmd| { crate::ui::code_view_pane::CommandRepr::from_command(&app, cmd.clone()) })
+                    .map(|cmd| { crate::ui::code_view_pane::CommandRepr::from_command(&app, &cmd) })
                     .collect::<gio::ListStore>();
                 code_cmd_list.imp().instance_model(model);
                 app.imp().handle_code_list_selection_change();
@@ -173,9 +178,13 @@ mod imp {
             let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
             let line_builder_pane = window.imp().line_builder_pane.clone();
             let cmd_editor = window.imp().code_view_pane.imp().instruction_editor.clone();
-            app.connect_closure("command-changed", false, glib::closure_local!(move |_: super::MtemuApplication, cmd: ui::line_builder_pane::CommandRepr| {
-                line_builder_pane.renew_command(&cmd);
-                cmd_editor.renew_command(&cmd);
+            app.connect_closure("command-changed", false, glib::closure_local!(move |_: super::MtemuApplication, cmd: BoxedCommand| {
+                // TODO: currently causes a recursion that overflows the stack
+                // command-changed signal should be split into one that is
+                // called when builder selection is changed and one that is
+                // called when code list and editor have changes
+                //line_builder_pane.renew_command(&ui::line_builder_pane::CommandRepr::from_command(&cmd.0));
+                cmd_editor.renew_command(&ui::code_view_pane::editor::CommandRepr::from_command(&cmd.0));
             }));
         }
         fn handle_code_list_selection_change(&self) {
@@ -200,10 +209,10 @@ mod imp {
                     selected
                 }) else { return };
                 let emul_clone = emul.clone();
-                let cmd = {
+                let cmd = BoxedCommand({
                     let Some(ref emul) = *emul_clone.borrow() else { return };
-                    ui::line_builder_pane::CommandRepr::from_command(emul.get_command(selected))
-                };
+                    Rc::new(emul.get_command(selected))
+                });
                 app.emit_by_name::<()>("command-changed", &[&cmd]);
             });
             let Some(code_list_model) = cmd_list.imp().code_list.model() else { return };
@@ -217,12 +226,13 @@ mod imp {
             let cmd_builder_clone = cmd_builder.obj().clone();
             let cmd_editor = window.imp().code_view_pane.imp().instruction_editor.clone();
             let closure = glib::closure_local!(move |_: SingleSelection, _: u32, _: u32| {
-                let cmd = cmd_builder_clone.get_command();
+                let mut new_words = cmd_builder_clone.get_command().get_words().into_iter().map(|word| { word as i32 }).collect::<Vec<i32>>();
                 let cur_cmd = cmd_editor.get_codes();
-                cmd.set_a_arg(cur_cmd[7]);
-                cmd.set_b_arg(cur_cmd[8]);
-                cmd.set_d_arg(cur_cmd[9]);
-                app.emit_by_name::<()>("command-changed", &[&cmd]);
+                new_words[7] = cur_cmd[7] as i32;
+                new_words[8] = cur_cmd[8] as i32;
+                new_words[9] = cur_cmd[9] as i32;
+                let cmd = emulator::Command::new(0, new_words.as_mut_slice());
+                app.emit_by_name::<()>("command-changed", &[&BoxedCommand(Rc::new(cmd))]);
             });
             let Some(model) = cmd_builder.jump_type.model() else { return };
             model.connect_closure("selection-changed", false, closure.clone());
@@ -256,12 +266,11 @@ mod imp {
                     let Some(ref emul) = *emul.borrow() else { todo!() };
                     Rc::new(emul.get_state())
                 });
-                let command = {
+                let command = BoxedCommand({
                     let emul = app_clone.get_emulator();
                     let Some(ref emul) = *emul.borrow() else { todo!() };
-                    let cmd = emul.get_command(state.0.program_counter);
-                    ui::line_builder_pane::CommandRepr::from_command(cmd)
-                };
+                    Rc::new(emul.get_command(state.0.program_counter))
+                });
                 app_clone.emit_by_name::<()>("state-changed", &[&state]);
                 app_clone.emit_by_name::<()>("command-changed", &[&command]);
             });
@@ -283,13 +292,16 @@ mod imp {
                     state.program_counter = 0;
                     Rc::new(state)
                 });
-                let command = {
+                app_clone.emit_by_name::<()>("state-changed", &[&state]);
+
+                let command = BoxedCommand({
                     let emul = app_clone.get_emulator();
                     let Some(ref emul) = *emul.borrow() else { todo!() };
-                    let cmd = emul.get_command(state.0.program_counter);
-                    ui::line_builder_pane::CommandRepr::from_command(cmd)
-                };
-                app_clone.emit_by_name::<()>("state-changed", &[&state]);
+                    if emul.commands_count() == 0 {
+                        return;
+                    }
+                    Rc::new(emul.get_command(state.0.program_counter))
+                });
                 app_clone.emit_by_name::<()>("command-changed", &[&command]);
             });
             let app_clone = app.clone();
@@ -309,12 +321,11 @@ mod imp {
                             let Some(ref emul) = *emul.borrow() else { todo!() };
                             Rc::new(emul.get_state())
                         });
-                        let command = {
+                        let command = BoxedCommand({
                             let emul = app_clone.get_emulator();
                             let Some(ref emul) = *emul.borrow() else { todo!() };
-                            let cmd = emul.get_command(state.0.program_counter);
-                            ui::line_builder_pane::CommandRepr::from_command(cmd)
-                        };
+                            Rc::new(emul.get_command(state.0.program_counter))
+                        });
                         app_clone.emit_by_name::<()>("state-changed", &[&state]);
                         app_clone.emit_by_name::<()>("command-changed", &[&command]);
                         glib::timeout_future(std::time::Duration::from_millis(20)).await;
@@ -330,8 +341,6 @@ mod imp {
             let app_clone = app.clone();
             let cmd_view = window.imp().code_view_pane.clone();
             let cmd_view_clone = cmd_view.clone();
-            let editor_view = window.imp().line_builder_pane.clone();
-            let editor_view_clone = editor_view.clone();
             cmd_view.imp().add_button.connect_closure("clicked", false, glib::closure_local!(move |_: gtk::Button| {
                 let mut cmd_words = cmd_view_clone.get_codes().into_iter().map(|word: u8| { word as i32 }).collect::<Vec<i32>>();
                 let emul = app_clone.get_emulator();
@@ -548,7 +557,6 @@ impl MtemuApplication {
         filters.append(&filter);
         open_file.set_filters(Some(&filters));
         let emul = self.get_emulator();
-        let obj = self.clone();
         open_file.save(Some(&window.clone()), gio::Cancellable::NONE, move |res| {
             let Ok(file) = res else { return };
             let path = file.path().expect("Unable to get file path");
@@ -558,16 +566,7 @@ impl MtemuApplication {
                 let Some(ref emul) = *emul.borrow() else { return };
                 emul.export_raw()
             };
-            writer.write_all(&bytes);
-            // let commands = imp::BoxedCommands({
-            //     let Some(ref emul) = *emul.borrow() else { return };
-            //     let mut commands = Vec::<crate::emulator::Command>::with_capacity(emul.commands_count());
-            //     for i in 0..emul.commands_count() {
-            //         commands.push(emul.get_command(i));
-            //     }
-            //     Rc::new(commands)
-            // });
-            //obj.emit_by_name::<()>("commands-appeared", &[&commands]);
+            let _ = writer.write_all(&bytes);
         });
     }
     fn toggle_debug_pane(&self) {

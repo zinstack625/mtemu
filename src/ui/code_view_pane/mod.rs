@@ -17,7 +17,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-mod editor;
+pub mod editor;
 use adw::subclass::prelude::*;
 
 use gtk::{gio, glib, prelude::ObjectExt};
@@ -256,7 +256,7 @@ glib::wrapper! {
 }
 
 impl CommandRepr {
-    pub fn from_command(app: &crate::application::MtemuApplication, cmd: crate::emulator::Command) -> Self {
+    pub fn from_command(app: &crate::application::MtemuApplication, cmd: &crate::emulator::Command) -> Self {
         let emul = app.get_emulator();
         let Some(ref emul) = *emul.borrow() else { return glib::Object::builder().build() };
         let number = cmd.get_num();

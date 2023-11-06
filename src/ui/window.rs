@@ -25,13 +25,6 @@ use super::debug_pane::DebugPane;
 use super::line_builder_pane::LineBuilderPane;
 
 mod imp {
-
-    use std::cell::Cell;
-
-    use gtk::prelude::ObjectExt;
-
-    use crate::application::MtemuApplication;
-
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]

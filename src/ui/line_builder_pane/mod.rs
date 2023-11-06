@@ -20,13 +20,14 @@
 mod models;
 
 use adw::subclass::prelude::*;
-use gtk::prelude::*;
 use gtk::{gio, glib};
 use gtk::gio::functions;
 use gtk::gio::ResourceLookupFlags;
 use models::*;
 
 use crate::emulator;
+
+use super::PlainCommandRepr;
 
 macro_rules! col_static_factory {
     ($x:ty, $y:ident) => {
@@ -83,73 +84,6 @@ mod imp {
 
     use super::*;
 
-    // enum JumpType {
-    //     JNZ,
-    //     JMP,
-    //     JNXT,
-    //     END,
-    //     CLNZ,
-    //     CALL,
-    //     RET,
-    //     JSP,
-    //     JSNZ,
-    //     PUSH,
-    //     POP,
-    //     JSNC4,
-    //     JZ,
-    //     JF3,
-    //     JOVR,
-    //     JC4,
-    //     Unknown = 255,
-    // }
-    // enum FlagType {
-    //     M0,
-    //     M1,
-    //     C0,
-    //     Unknown = 255,
-    // }
-    // enum FuncType {
-    //     RPlusS = 0,
-    //     SMinusRMinus1 = 1,
-    //     RMinusSMinus1 = 2,
-    //     ROrS = 3,
-    //     RAndS = 4,
-    //     NoRAndS = 5,
-    //     RXorS = 6,
-    //     REqS = 7,
-    //     RPlusSPlus1 = 8,
-    //     SMinusR = 9,
-    //     RMinusS = 10,
-    //     SetPointer = 11,
-    //     StoreMemory = 12,
-    //     LoadMemory = 13,
-    //     StoreDevice = 14,
-    //     LoadDevice = 15,
-    //     Unknown = 255,
-    // }
-    // enum FuncArgs {
-    //     AAndPQ,
-    //     AAndB,
-    //     ZeroAndQ,
-    //     ZeroAndB,
-    //     ZeroAndA,
-    //     DAndA,
-    //     DAndQ,
-    //     DAndZero,
-    //     Unknown = 255,
-    // }
-    // enum FuncLoad {
-    //     FInQ,
-    //     NoLoad,
-    //     FInBAndAInY,
-    //     FInB,
-    //     SRFInBAndSRQInQ,
-    //     SRFInB,
-    //     SLFInBAndSLQInQ,
-    //     SLFInB,
-    //     Unknown = 255,
-    // }
-
     #[derive(Default, Properties)]
     #[properties(wrapper_type = super::CommandRepr)]
     pub struct CommandRepr {
@@ -179,7 +113,7 @@ mod imp {
 
     #[glib::object_subclass]
     impl ObjectSubclass for CommandRepr {
-        const NAME: &'static str = "EditCommandRepr";
+        const NAME: &'static str = "LineBuilderCommandRepr";
         type Type = super::CommandRepr;
         type ParentType = glib::Object;
     }
@@ -399,19 +333,16 @@ glib::wrapper! {
     pub struct CommandRepr(ObjectSubclass<imp::CommandRepr>);
 }
 
-impl CommandRepr {
-    pub fn new() -> Self {
-        glib::Object::builder().build()
-    }
-    pub fn from_command(cmd: emulator::Command) -> Self {
+impl PlainCommandRepr for CommandRepr {
+    fn from_command(cmd: &emulator::Command) -> Self {
         let words = cmd.get_words().unwrap();
         glib::Object::builder()
             .property("addr", (words[2] & 0b1111) | ((words[1] & 0b1111) << 4) | ((words[0] & 0b1111) << 8))
             .property("jump", words[3] as u8)
-            .property("flag", words[4] as u8)
-            .property("func", words[5] as u8)
-            .property("args", words[6] as u8)
             .property("load", words[4] as u8)
+            .property("args", words[5] as u8)
+            .property("func", words[6] as u8)
+            .property("flag", words[4] as u8)
             .property("pointer", {
                 let mut res = words[5];
                 if words[5] == 8 { res = 3; }
@@ -425,21 +356,29 @@ impl CommandRepr {
             .property("d-arg", words[9] as u8)
             .build()
     }
-    pub fn get_words(&self) -> [i32;12]  {
+    fn get_words(&self) -> [u8;10]  {
         [
-            ((self.addr() >> 8) & 0b1111) as i32,
-            ((self.addr() >> 4) & 0b1111) as i32,
-            (self.addr() & 0b1111) as i32,
-            self.jump() as i32,
-            self.flag() as i32,
-            self.func() as i32,
-            self.args() as i32,
-            self.load() as i32,
-            self.pointer_size() as i32,
-            self.a_arg() as i32,
-            self.b_arg() as i32,
-            self.d_arg() as i32,
+            ((self.addr() >> 8) & 0b1111) as u8,
+            ((self.addr() >> 4) & 0b1111) as u8,
+            (self.addr() & 0b1111) as u8,
+            self.jump() as u8,
+            // TODO: highest bit of these two should be set
+            // via separate widget. This is currently ignored
+            self.load() as u8,
+            self.args() as u8,
+            self.func() as u8,
+            //self.load() as u8,
+            //self.pointer_size() as u8,
+            self.a_arg() as u8,
+            self.b_arg() as u8,
+            self.d_arg() as u8,
         ]
+    }
+}
+
+impl CommandRepr {
+    pub fn new() -> Self {
+        glib::Object::builder().build()
     }
 }
 
@@ -452,7 +391,7 @@ impl LineBuilderPane {
     pub fn renew_command(&self, new_command: &CommandRepr) {
         self.imp().renew_command(new_command.imp());
     }
-    pub fn get_words(&self) -> [i32;12] {
+    pub fn get_words(&self) -> [u8;10] {
         self.imp().get_command().get_words()
     }
     pub fn get_command(&self) -> CommandRepr {
