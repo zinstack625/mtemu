@@ -23,10 +23,10 @@ use gtk::glib::Properties;
 use gtk::{gio, glib};
 
 use crate::emulator;
-use crate::ui::{self, PlainCommandRepr};
+use crate::ui::{PlainCommandRepr};
 
 mod imp {
-    use gtk::{prelude::ObjectExt, traits::{EntryExt, EntryBufferExt, EditableExt}, glib::closure_local};
+    use gtk::{prelude::ObjectExt, traits::{EntryExt, EditableExt}, glib::closure_local};
     use std::cell::Cell;
     use super::*;
 
@@ -122,7 +122,7 @@ mod imp {
     impl BoxImpl for InstructionEditor {}
     impl InstructionEditor {
         fn limit_input_binary(&self) {
-            let limiter = closure_local!(move |field: gtk::Text, inserted: String, cnt: i32, pos: glib::value::Value| {
+            let limiter = closure_local!(move |field: gtk::Text, _inserted: String, _cnt: i32, _pos: glib::value::Value| {
                 let content = field.buffer().property::<String>("text").chars().filter(|c| { *c == '0' || *c == '1' }).collect::<String>();
                 field.buffer().set_property("text", &content);
             });

@@ -238,7 +238,7 @@ impl MT1804Emulator for OriginalImplementation {
         unsafe { emulator_remove_command(self.inst.as_mut().unwrap().to_owned(), index as i32); }
     }
 
-    fn move_command(&mut self, index: usize, new_pos: usize) {
+    fn move_command(&mut self, _index: usize, _new_pos: usize) {
         todo!()
     }
 

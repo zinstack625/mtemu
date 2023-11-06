@@ -176,7 +176,7 @@ mod imp {
             let app = self.obj().clone();
             let Some(window) = app.active_window() else { return };
             let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
-            let line_builder_pane = window.imp().line_builder_pane.clone();
+            let _line_builder_pane = window.imp().line_builder_pane.clone();
             let cmd_editor = window.imp().code_view_pane.imp().instruction_editor.clone();
             app.connect_closure("command-changed", false, glib::closure_local!(move |_: super::MtemuApplication, cmd: BoxedCommand| {
                 // TODO: currently causes a recursion that overflows the stack
@@ -253,7 +253,7 @@ mod imp {
             let app = self.obj().clone();
             let Some(window) = app.active_window() else { return };
             let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
-            let button_view = window.imp().debug_pane.imp().stepping_view.imp().clone();
+            let button_view = window.imp().debug_pane.imp().stepping_view.imp();
             let app_clone = app.clone();
             button_view.step_button.connect_clicked(move |_| {
                 {
