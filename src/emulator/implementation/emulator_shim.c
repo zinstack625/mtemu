@@ -412,17 +412,50 @@ int32_t emulator_get_port(Emulator *inst) {
   return res;
 }
 
-int32_t emulator_get_mem_value(Emulator *inst) {
+int32_t emulator_get_mem_value(Emulator *inst, int32_t ind) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *GetMemValueDesc =
-      mono_method_desc_new("mtemu.Emulator:GetMemValue()", 1);
+      mono_method_desc_new("mtemu.Emulator:GetMemValue(int)", 1);
   MonoMethod *GetMemValue =
       mono_method_desc_search_in_class(GetMemValueDesc, emulator_class);
+  void* args = { &ind };
   int32_t res = *(int32_t *)mono_object_unbox(
-      mono_runtime_invoke(GetMemValue, inst->emul, NULL, NULL));
+      mono_runtime_invoke(GetMemValue, inst->emul, args, NULL));
   mono_method_desc_free(GetMemValueDesc);
   mono_free_method(GetMemValue);
   return res;
+}
+
+int32_t emulator_get_mem_length(Emulator *inst) {
+  MonoClass *emulator_class = mono_object_get_class(inst->emul);
+  MonoMethodDesc *GetMemLengthDesc =
+      mono_method_desc_new("mtemu.Emulator:GetMemLength()", 1);
+  MonoMethod *GetMemLength =
+      mono_method_desc_search_in_class(GetMemLengthDesc, emulator_class);
+  int32_t res = *(int32_t *)mono_object_unbox(
+      mono_runtime_invoke(GetMemLength, inst->emul, NULL, NULL));
+  mono_method_desc_free(GetMemLengthDesc);
+  mono_free_method(GetMemLength);
+  return res;
+}
+
+void emulator_get_mem(Emulator *inst, int32_t **memory, size_t *mem_cnt) {
+  MonoClass *emulator_class = mono_object_get_class(inst->emul);
+  MonoMethodDesc *GetMemDesc =
+    mono_method_desc_new("mtemu.Emulator:GetMem()", 1);
+  MonoMethod *GetMem =
+    mono_method_desc_search_in_class(GetMemDesc, emulator_class);
+  MonoArray *managed_memory =
+      (MonoArray *)mono_runtime_invoke(GetMem, inst->emul, NULL, NULL);
+  *mem_cnt = mono_array_length(managed_memory);
+
+  int32_t *array_local = malloc(*mem_cnt * sizeof(int32_t));
+  for (size_t i = 0; i < *mem_cnt; ++i) {
+    array_local[i] = mono_array_get(managed_memory, int32_t, i);
+  }
+  mono_method_desc_free(GetMemDesc);
+  mono_free_method(GetMem);
+  *memory = array_local;
 }
 
 int32_t emulator_get_reg_q(Emulator *inst) {

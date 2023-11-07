@@ -99,7 +99,9 @@ extern "C" {
     fn emulator_get_stack_length(_: *mut Emulator) -> i32;
     fn emulator_get_mp(_: *mut Emulator) -> i32;
     fn emulator_get_port(_: *mut Emulator) -> i32;
-    fn emulator_get_mem_value(_: *mut Emulator) -> i32;
+    fn emulator_get_mem_value(_: *mut Emulator, _: i32) -> i32;
+    fn emulator_get_mem_length(_: *mut Emulator) -> i32;
+    fn emulator_get_mem(_: *mut Emulator, _: *mut *mut i32, _: *mut libc::size_t);
     fn emulator_get_reg_q(_: *mut Emulator) -> i32;
     fn emulator_get_reg_value(_: *mut Emulator, _: i32) -> i32;
     fn emulator_get_f(_: *mut Emulator) -> i32;
@@ -155,7 +157,9 @@ pub trait MT1804Emulator {
     fn get_stack(&self) -> Vec<i32>;
     fn get_mp(&self) -> usize;
     fn get_port(&self) -> usize;
-    fn get_mem_value(&self) -> usize;
+    fn get_mem_value(&self, index: usize) -> usize;
+    fn get_mem_length(&self) -> usize;
+    fn get_mem(&self) -> Vec<i32>;
     fn get_reg_q(&self) -> u8;
     fn get_reg(&self, index: usize) -> u8;
     fn get_f(&self) -> u8;
@@ -311,8 +315,27 @@ impl MT1804Emulator for OriginalImplementation {
         unsafe { emulator_get_port(self.inst.as_ref().unwrap().to_owned()) as usize }
     }
 
-    fn get_mem_value(&self) -> usize {
-        unsafe { emulator_get_mem_value(self.inst.as_ref().unwrap().to_owned()) as usize }
+    fn get_mem_value(&self, index: usize) -> usize {
+        unsafe { emulator_get_mem_value(self.inst.as_ref().unwrap().to_owned(), index as i32) as usize }
+    }
+
+    fn get_mem_length(&self) -> usize {
+        unsafe { emulator_get_mem_length(self.inst.as_ref().unwrap().to_owned()) as usize }
+    }
+
+    fn get_mem(&self) -> Vec<i32> {
+        let mut mem_size: libc::size_t = 0;
+        let mut mem_shim: *mut i32 = std::ptr::null_mut();
+        unsafe { emulator_get_mem(self.inst.as_ref().unwrap().to_owned(), &mut mem_shim, &mut mem_size) };
+        let mut memory = Vec::<i32>::new();
+        let mut map_cnt = 0usize;
+        memory.resize_with(mem_size, || {
+            let val = unsafe { mem_shim.add(map_cnt).as_ref().unwrap().to_owned() };
+            map_cnt += 1;
+            val
+        });
+        unsafe { libc::free(mem_shim as *mut libc::c_void); }
+        memory
     }
 
     fn get_reg_q(&self) -> u8 {
