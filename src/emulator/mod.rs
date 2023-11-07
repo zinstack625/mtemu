@@ -95,7 +95,8 @@ extern "C" {
     fn emulator_set_pc(_: *mut Emulator, _: i32) -> i32;
     fn emulator_get_sp(_: *mut Emulator) -> i32;
     fn emulator_set_sp(_: *mut Emulator, _: i32) -> i32;
-    fn emulator_get_stack_value(_: *mut Emulator) -> i32;
+    fn emulator_get_stack_value(_: *mut Emulator, _: i32) -> i32;
+    fn emulator_get_stack_length(_: *mut Emulator) -> i32;
     fn emulator_get_mp(_: *mut Emulator) -> i32;
     fn emulator_get_port(_: *mut Emulator) -> i32;
     fn emulator_get_mem_value(_: *mut Emulator) -> i32;
@@ -151,7 +152,7 @@ pub trait MT1804Emulator {
     fn set_pc(&mut self, index: usize);
     fn get_sp(&self) -> usize;
     fn set_sp(&mut self, index: usize);
-    fn get_stack_value(&self) -> usize;
+    fn get_stack(&self) -> Vec<i32>;
     fn get_mp(&self) -> usize;
     fn get_port(&self) -> usize;
     fn get_mem_value(&self) -> usize;
@@ -290,8 +291,16 @@ impl MT1804Emulator for OriginalImplementation {
         unsafe { emulator_set_sp(self.inst.as_mut().unwrap().to_owned(), sp as i32); }
     }
 
-    fn get_stack_value(&self) -> usize {
-        unsafe { emulator_get_stack_value(self.inst.as_ref().unwrap().to_owned()) as usize }
+    fn get_stack(&self) -> Vec<i32> {
+        let stack_len = unsafe { emulator_get_stack_length(self.inst.as_ref().unwrap().to_owned()) as usize };
+        let mut stack = Vec::<i32>::new();
+        let mut cur_stack_pos: i32 = 0;
+        stack.resize_with(stack_len, || {
+            let val = unsafe { emulator_get_stack_value(self.inst.as_ref().unwrap().to_owned(), cur_stack_pos) };
+            cur_stack_pos += 1;
+            val
+        });
+        stack
     }
 
     fn get_mp(&self) -> usize {

@@ -74,6 +74,10 @@
         <attribute name="action">app.show-builder</attribute>
       </item>
       <item>
+        <attribute name="label" translatable="yes">_Show stack</attribute>
+        <attribute name="action">app.show-stack</attribute>
+      </item>
+      <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>
         <attribute name="action">app.preferences</attribute>
       </item>

@@ -60,7 +60,6 @@ mod imp {
     impl ObjectImpl for MtemuWindow {
         fn constructed(&self) {
             self.parent_constructed();
-
         }
     }
     impl WidgetImpl for MtemuWindow {}

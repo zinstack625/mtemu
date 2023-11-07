@@ -360,16 +360,30 @@ int32_t emulator_set_sp(Emulator *inst, int32_t value) {
   return res;
 }
 
-int32_t emulator_get_stack_value(Emulator *inst) {
+int32_t emulator_get_stack_value(Emulator *inst, int32_t addr) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *GetStackValueDesc =
       mono_method_desc_new("mtemu.Emulator:GetStackValue(int)", 1);
   MonoMethod *GetStackValue =
       mono_method_desc_search_in_class(GetStackValueDesc, emulator_class);
+  void* args[1] = {&addr};
   int32_t res = *(int32_t *)mono_object_unbox(
-      mono_runtime_invoke(GetStackValue, inst->emul, NULL, NULL));
+      mono_runtime_invoke(GetStackValue, inst->emul, args, NULL));
   mono_method_desc_free(GetStackValueDesc);
   mono_free_method(GetStackValue);
+  return res;
+}
+
+int32_t emulator_get_stack_length(Emulator *inst) {
+  MonoClass *emulator_class = mono_object_get_class(inst->emul);
+  MonoMethodDesc *GetStackLenDesc =
+      mono_method_desc_new("mtemu.Emulator:GetStackLen()", 1);
+  MonoMethod *GetStackLen =
+      mono_method_desc_search_in_class(GetStackLenDesc, emulator_class);
+  int32_t res = *(int32_t *)mono_object_unbox(
+      mono_runtime_invoke(GetStackLen, inst->emul, NULL, NULL));
+  mono_method_desc_free(GetStackLenDesc);
+  mono_free_method(GetStackLen);
   return res;
 }
 

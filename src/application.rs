@@ -30,6 +30,7 @@ use adw::subclass::prelude::*;
 use gtk::{gio, glib};
 
 use crate::config::VERSION;
+use crate::ui;
 use crate::ui::window::MtemuWindow;
 use crate::ui::PlainCommandRepr;
 
@@ -44,6 +45,7 @@ mod imp {
     #[derive(Default)]
     pub struct MtemuApplication {
         emulator: Arc<RefCell<Option<Box<dyn crate::emulator::MT1804Emulator>>>>,
+        pub stack_window: RefCell<Option<u32>>,
     }
 
     #[glib::object_subclass]
@@ -63,6 +65,10 @@ mod imp {
     #[derive(glib::SharedBoxed, Clone, Debug)]
     #[shared_boxed_type(name = "BoxedState")]
     pub struct BoxedState(pub Rc<emulator::State>);
+
+    #[derive(glib::SharedBoxed, Clone, Debug)]
+    #[shared_boxed_type(name = "BoxedStack")]
+    pub struct BoxedStack(pub Rc<Vec<u32>>);
 
     impl ObjectImpl for MtemuApplication {
         fn constructed(&self) {
@@ -84,6 +90,9 @@ mod imp {
                      .build(),
                      glib::subclass::Signal::builder("command-changed")
                      .param_types([BoxedCommand::static_type()])
+                     .build(),
+                     glib::subclass::Signal::builder("stack-changed")
+                     .param_types([BoxedStack::static_type()])
                      .build()
                 ]
             });
@@ -111,6 +120,7 @@ mod imp {
             self.connect_state_changed();
             self.connect_command_changed();
             self.connect_repr_changed();
+            self.connect_stack_changed();
             self.handle_debug_buttons();
             self.handle_builder_selection_change();
             self.handle_edit_buttons();
@@ -187,6 +197,19 @@ mod imp {
                 cmd_editor.renew_command(&ui::code_view_pane::editor::CommandRepr::from_command(&cmd.0));
             }));
         }
+        fn connect_stack_changed(&self) {
+            let app_clone = self.obj().clone();
+            self.obj().connect_closure("stack-changed", false, glib::closure_local!(move |_: super::MtemuApplication, stack: BoxedStack| {
+                let Some(ref stack_id) = *app_clone.imp().stack_window.borrow() else { return };
+                let Some(window) = app_clone.window_by_id(*stack_id) else { return };
+                let Ok(window) = window.downcast::<ui::stack_view::StackWindow>() else { return };
+
+                let stack_repr = stack.0.iter().enumerate().map(|(ind, val)| {
+                    ui::stack_view::StackValueRepr::new(ind as u32, *val as u32)
+                }).collect::<gio::ListStore>();
+                window.set_stack(stack_repr);
+            }));
+        }
         fn handle_code_list_selection_change(&self) {
             let app = self.obj().clone();
             let Some(window) = app.active_window() else { return };
@@ -256,13 +279,19 @@ mod imp {
             let button_view = window.imp().debug_pane.imp().stepping_view.imp();
             let app_clone = app.clone();
             button_view.step_button.connect_clicked(move |_| {
-                {
-                    let emul = app_clone.get_emulator();
+                let emul = app_clone.get_emulator();
+                let prev_cmd = {
                     let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                    let mut pc = emul.get_pc();
+                    // just give me the goddamn exception...
+                    if pc == usize::MAX {
+                        pc = 0;
+                    }
+                    let prev_cmd = emul.get_command(pc);
                     emul.exec_one();
-                }
+                    prev_cmd
+                };
                 let state = BoxedState({
-                    let emul = app_clone.get_emulator();
                     let Some(ref emul) = *emul.borrow() else { todo!() };
                     Rc::new(emul.get_state())
                 });
@@ -273,16 +302,26 @@ mod imp {
                 });
                 app_clone.emit_by_name::<()>("state-changed", &[&state]);
                 app_clone.emit_by_name::<()>("command-changed", &[&command]);
+                let Some(words) = prev_cmd.get_words() else { return };
+                match words[3] {
+                    4..=6 | 9 | 10 => {
+                        let stack = Rc::new({
+                            let Some(ref emul) = *emul.borrow() else { return };
+                            emul.get_stack()
+                        }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
+                        app_clone.emit_by_name::<()>("stack-changed", &[&BoxedStack(stack)]);
+                    }
+                    _ => {}
+                }
             });
             let app_clone = app.clone();
             button_view.reset_button.connect_clicked(move |_| {
+                let emul = app_clone.get_emulator();
                 {
-                    let emul = app_clone.get_emulator();
                     let Some(ref mut emul) = *emul.borrow_mut() else { return };
                     emul.reset();
                 }
                 let state = BoxedState({
-                    let emul = app_clone.get_emulator();
                     let Some(ref emul) = *emul.borrow() else { todo!() };
                     // pc returned by engine is set to -1
                     // very hacky and breaks ui but works
@@ -294,8 +333,13 @@ mod imp {
                 });
                 app_clone.emit_by_name::<()>("state-changed", &[&state]);
 
+                let stack = Rc::new({
+                    let Some(ref emul) = *emul.borrow() else { return };
+                    emul.get_stack()
+                }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
+                app_clone.emit_by_name::<()>("stack_changed", &[&BoxedStack(stack)]);
+
                 let command = BoxedCommand({
-                    let emul = app_clone.get_emulator();
                     let Some(ref emul) = *emul.borrow() else { todo!() };
                     if emul.commands_count() == 0 {
                         return;
@@ -311,23 +355,39 @@ mod imp {
                 context.spawn_local(glib::clone!(@weak app_clone => async move {
                     button_clone.set_sensitive(false);
                     for _ in 0..200 {
-                        {
-                            let emul = app_clone.get_emulator();
+                        let emul = app_clone.get_emulator();
+                        let prev_cmd = {
                             let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                            let mut pc = emul.get_pc();
+                            // just give me the goddamn exception...
+                            if pc == usize::MAX {
+                                pc = 0;
+                            }
+                            let prev_cmd = emul.get_command(pc);
                             emul.exec_one();
-                        }
+                            prev_cmd
+                        };
                         let state = BoxedState({
-                            let emul = app_clone.get_emulator();
                             let Some(ref emul) = *emul.borrow() else { todo!() };
                             Rc::new(emul.get_state())
                         });
                         let command = BoxedCommand({
-                            let emul = app_clone.get_emulator();
                             let Some(ref emul) = *emul.borrow() else { todo!() };
                             Rc::new(emul.get_command(state.0.program_counter))
                         });
                         app_clone.emit_by_name::<()>("state-changed", &[&state]);
                         app_clone.emit_by_name::<()>("command-changed", &[&command]);
+                        let Some(words) = prev_cmd.get_words() else { return };
+                        match words[3] {
+                            4..=6 | 9 | 10 => {
+                                let stack = Rc::new({
+                                    let Some(ref emul) = *emul.borrow() else { return };
+                                    emul.get_stack()
+                                }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
+                                app_clone.emit_by_name::<()>("stack_changed", &[&BoxedStack(stack)]);
+                            }
+                            _ => {}
+                        }
                         glib::timeout_future(std::time::Duration::from_millis(20)).await;
                     }
                     button_clone.set_sensitive(true);
@@ -492,12 +552,16 @@ impl MtemuApplication {
         let show_builder_action = gio::ActionEntry::builder("show-builder")
             .activate(move |app: &Self, _, _| app.toggle_builder_pane())
             .build();
+        let show_stack_action = gio::ActionEntry::builder("show-stack")
+            .activate(move |app: &Self, _, _| app.toggle_stack())
+            .build();
         self.add_action_entries([quit_action,
                                  about_action,
                                  open_file_action,
                                  save_file_action,
                                  show_debug_action,
-                                 show_builder_action]);
+                                 show_builder_action,
+                                 show_stack_action]);
     }
 
     fn show_about(&self) {
@@ -578,6 +642,22 @@ impl MtemuApplication {
         let Some(window) = self.active_window().and_downcast::<MtemuWindow>() else { return };
         let visible = window.imp().line_builder_pane.property::<bool>("visible");
         window.imp().line_builder_pane.set_property("visible", !visible);
+    }
+    fn toggle_stack(&self) {
+        if let Some(stack_id) = *self.imp().stack_window.borrow() {
+            if let Some(window) = self.window_by_id(stack_id) {
+                self.remove_window(&window);
+                window.destroy();
+                return;
+            }
+        }
+        let stack_window = {
+            let window = ui::stack_view::StackWindow::new(self);
+            self.add_window(&window);
+            self.imp().stack_window.replace(Some(window.id()));
+            window
+        };
+        stack_window.present();
     }
     pub fn set_emulator(&self, emul: Box<dyn crate::emulator::MT1804Emulator>) {
         self.imp().set_emulator(emul);

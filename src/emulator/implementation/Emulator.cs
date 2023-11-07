@@ -928,6 +928,9 @@ namespace mtemu
         {
             return stack_[index];
         }
+        public int GetStackLen() {
+            return stack_.Length;
+        }
 
         public int GetMP()
         {

@@ -189,6 +189,7 @@ mod imp {
 
     impl ObjectImpl for LineBuilderPane {
         fn constructed(&self) {
+            self.parent_constructed();
             self.prepare_jump_type_table("/org/bmstu/mtemu/ui/line_builder_pane/jump_table_entries.json");
             self.prepare_instr_type_table("/org/bmstu/mtemu/ui/line_builder_pane/instr_table_entries.json");
             self.prepare_pointer_type_table("/org/bmstu/mtemu/ui/line_builder_pane/pointer_type_table_entries.json");
