@@ -46,6 +46,7 @@ mod imp {
     pub struct MtemuApplication {
         emulator: Arc<RefCell<Option<Box<dyn crate::emulator::MT1804Emulator>>>>,
         pub stack_window: RefCell<Option<u32>>,
+        pub memory_window: RefCell<Option<u32>>,
     }
 
     #[glib::object_subclass]
@@ -70,6 +71,10 @@ mod imp {
     #[shared_boxed_type(name = "BoxedStack")]
     pub struct BoxedStack(pub Rc<Vec<u32>>);
 
+    #[derive(glib::SharedBoxed, Clone, Debug)]
+    #[shared_boxed_type(name = "BoxedMemory")]
+    pub struct BoxedMemory(pub Rc<Vec<u32>>);
+
     impl ObjectImpl for MtemuApplication {
         fn constructed(&self) {
             self.parent_constructed();
@@ -93,6 +98,9 @@ mod imp {
                      .build(),
                      glib::subclass::Signal::builder("stack-changed")
                      .param_types([BoxedStack::static_type()])
+                     .build(),
+                     glib::subclass::Signal::builder("memory-changed")
+                     .param_types([BoxedMemory::static_type()])
                      .build()
                 ]
             });
@@ -121,6 +129,7 @@ mod imp {
             self.connect_command_changed();
             self.connect_repr_changed();
             self.connect_stack_changed();
+            self.connect_memory_changed();
             self.handle_debug_buttons();
             self.handle_builder_selection_change();
             self.handle_edit_buttons();
@@ -208,6 +217,18 @@ mod imp {
                     ui::stack_view::StackValueRepr::new(ind as u32, *val as u32)
                 }).collect::<gio::ListStore>();
                 window.set_stack(stack_repr);
+            }));
+        }
+        fn connect_memory_changed(&self) {
+            let app_clone = self.obj().clone();
+            self.obj().connect_closure("memory-changed", false, glib::closure_local!(move |_: super::MtemuApplication, memory: BoxedMemory| {
+                let Some(ref memory_id) = *app_clone.imp().memory_window.borrow() else { return };
+                let Some(window) = app_clone.window_by_id(*memory_id) else { return };
+                let Ok(window) = window.downcast::<ui::memory_view::MemoryWindow>() else { return };
+                let memory_repr = memory.0.iter().enumerate().map(|(ind, val)| {
+                    ui::memory_view::MemoryValueRepr::new(ind as u32, *val as u32)
+                }).collect::<gio::ListStore>();
+                window.set_memory(memory_repr);
             }));
         }
         fn handle_code_list_selection_change(&self) {
@@ -310,6 +331,16 @@ mod imp {
                             emul.get_stack()
                         }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
                         app_clone.emit_by_name::<()>("stack-changed", &[&BoxedStack(stack)]);
+                    }
+                    _ => {}
+                }
+                match words[6] {
+                    12 => {
+                        let memory = Rc::new({
+                           let Some(ref emul) = *emul.borrow() else { return };
+                            emul.get_mem().into_iter().map(|val| val as u32).collect::<Vec<u32>>()
+                        });
+                        app_clone.emit_by_name::<()>("memory-changed", &[&BoxedMemory(memory)]);
                     }
                     _ => {}
                 }
@@ -555,13 +586,17 @@ impl MtemuApplication {
         let show_stack_action = gio::ActionEntry::builder("show-stack")
             .activate(move |app: &Self, _, _| app.toggle_stack())
             .build();
+        let show_memory_action = gio::ActionEntry::builder("show-memory")
+            .activate(move |app: &Self, _, _| app.toggle_memory())
+            .build();
         self.add_action_entries([quit_action,
                                  about_action,
                                  open_file_action,
                                  save_file_action,
                                  show_debug_action,
                                  show_builder_action,
-                                 show_stack_action]);
+                                 show_stack_action,
+                                 show_memory_action]);
     }
 
     fn show_about(&self) {
@@ -658,6 +693,34 @@ impl MtemuApplication {
             window
         };
         stack_window.present();
+        let emul = self.get_emulator();
+        let stack = Rc::new({
+            let Some(ref emul) = *emul.borrow() else { return };
+            emul.get_stack()
+        }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
+        self.emit_by_name::<()>("stack-changed", &[&imp::BoxedStack(stack)]);
+    }
+    fn toggle_memory(&self) {
+        if let Some(memory_id) = *self.imp().memory_window.borrow() {
+            if let Some(window) = self.window_by_id(memory_id) {
+                self.remove_window(&window);
+                window.destroy();
+                return;
+            }
+        }
+        let memory_window = {
+            let window = ui::memory_view::MemoryWindow::new(self);
+            self.add_window(&window);
+            self.imp().memory_window.replace(Some(window.id()));
+            window
+        };
+        memory_window.present();
+        let emul = self.get_emulator();
+        let memory = Rc::new({
+            let Some(ref emul) = *emul.borrow() else { return };
+            emul.get_mem().into_iter().map(|val| val as u32).collect::<Vec<u32>>()
+        });
+        self.emit_by_name::<()>("memory-changed", &[&imp::BoxedMemory(memory)]);
     }
     pub fn set_emulator(&self, emul: Box<dyn crate::emulator::MT1804Emulator>) {
         self.imp().set_emulator(emul);

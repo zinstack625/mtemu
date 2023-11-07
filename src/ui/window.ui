@@ -78,6 +78,10 @@
         <attribute name="action">app.show-stack</attribute>
       </item>
       <item>
+        <attribute name="label" translatable="yes">_Show memory</attribute>
+        <attribute name="action">app.show-memory</attribute>
+      </item>
+      <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>
         <attribute name="action">app.preferences</attribute>
       </item>

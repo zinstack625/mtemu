@@ -947,6 +947,14 @@ namespace mtemu
             return memory_[index];
         }
 
+        public int GetMemLen() {
+            return memory_.Length;
+        }
+
+        public int[] GetMem() {
+            return memory_;
+        }
+
         public int GetRegQ()
         {
             return regQ_;
