@@ -419,6 +419,16 @@ mod imp {
                             }
                             _ => {}
                         }
+                        match words[6] {
+                            12 => {
+                                let memory = Rc::new({
+                                    let Some(ref emul) = *emul.borrow() else { return };
+                                    emul.get_mem().into_iter().map(|val| val as u32).collect::<Vec<u32>>()
+                                });
+                                app_clone.emit_by_name::<()>("memory-changed", &[&BoxedMemory(memory)]);
+                            }
+                            _ => {}
+                        }
                         glib::timeout_future(std::time::Duration::from_millis(20)).await;
                     }
                     button_clone.set_sensitive(true);
