@@ -270,7 +270,12 @@ mod imp {
             let cmd_builder_clone = cmd_builder.obj().clone();
             let cmd_editor = window.imp().code_view_pane.imp().instruction_editor.clone();
             let closure = glib::closure_local!(move |_: SingleSelection, _: u32, _: u32| {
-                let mut new_words = cmd_builder_clone.get_command().get_words().into_iter().map(|word| { word as i32 }).collect::<Vec<i32>>();
+                let mut new_words = cmd_builder_clone
+                    .get_command()
+                    .get_words()
+                    .into_iter()
+                    .map(|word| { word as i32 })
+                    .collect::<Vec<i32>>();
                 let cur_cmd = cmd_editor.get_codes();
                 new_words[7] = cur_cmd[7] as i32;
                 new_words[8] = cur_cmd[8] as i32;
@@ -303,10 +308,15 @@ mod imp {
                 let emul = app_clone.get_emulator();
                 let prev_cmd = {
                     let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                    let cmd_count = emul.commands_count();
                     let mut pc = emul.get_pc();
                     // just give me the goddamn exception...
                     if pc == usize::MAX {
                         pc = 0;
+                    }
+                    if cmd_count == 0 || pc >= cmd_count {
+                        // TODO: emit rom end
+                        return;
                     }
                     let prev_cmd = emul.get_command(pc);
                     emul.exec_one();
@@ -389,25 +399,21 @@ mod imp {
                         let emul = app_clone.get_emulator();
                         let prev_cmd = {
                             let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                            let cmd_count = emul.commands_count();
                             let mut pc = emul.get_pc();
                             // just give me the goddamn exception...
                             if pc == usize::MAX {
                                 pc = 0;
                             }
+                            if cmd_count == 0 || pc >= cmd_count {
+                                // TODO: emit rom end
+                                button_clone.set_sensitive(true);
+                                return;
+                            }
                             let prev_cmd = emul.get_command(pc);
                             emul.exec_one();
                             prev_cmd
                         };
-                        let state = BoxedState({
-                            let Some(ref emul) = *emul.borrow() else { todo!() };
-                            Rc::new(emul.get_state())
-                        });
-                        let command = BoxedCommand({
-                            let Some(ref emul) = *emul.borrow() else { todo!() };
-                            Rc::new(emul.get_command(state.0.program_counter))
-                        });
-                        app_clone.emit_by_name::<()>("state-changed", &[&state]);
-                        app_clone.emit_by_name::<()>("command-changed", &[&command]);
                         let Some(words) = prev_cmd.get_words() else { return };
                         match words[3] {
                             4..=6 | 9 | 10 => {
@@ -429,6 +435,23 @@ mod imp {
                             }
                             _ => {}
                         }
+                        let state = BoxedState({
+                            let Some(ref emul) = *emul.borrow() else { todo!() };
+
+                            Rc::new(emul.get_state())
+                        });
+                        app_clone.emit_by_name::<()>("state-changed", &[&state]);
+                        let command = BoxedCommand({
+                            let Some(ref emul) = *emul.borrow() else { todo!() };
+                            if emul.commands_count() <= state.0.program_counter {
+                                // TODO: emit rom end
+                                button_clone.set_sensitive(true);
+                                return;
+                            }
+                            Rc::new(emul.get_command(state.0.program_counter))
+                        });
+                        app_clone.emit_by_name::<()>("command-changed", &[&command]);
+
                         glib::timeout_future(std::time::Duration::from_millis(20)).await;
                     }
                     button_clone.set_sensitive(true);
