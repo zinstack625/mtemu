@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0" />
+  <requires lib="Adw" version="1.0" />
+  <template class="CommandWindow" parent="AdwApplicationWindow">
+    <property name="default-width">50</property>
+    <property name="default-height">300</property>
+    <property name="hexpand">true</property>
+    <property name="content">
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <property name="spacing">10</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="spacing">10</property>
+            <property name="margin-bottom">5</property>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="hexpand">true</property>
+                <property name="hscrollbar-policy">2</property>
+                <property name="vexpand">true</property>
+                <property name="propagate-natural-width">true</property>
+                <child>
+                  <object class="GtkColumnView" id="command_list">
+                    <property name="vexpand">true</property>
+                    <property name="reorderable">false</property>
+                    <property name="show-row-separators">true</property>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="command_addr">
+                        <property name="title">Address</property>
+                        <property name="header-menu">command_list_menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="command_name">
+                        <property name="title">Value</property>
+                        <property name="header-menu">command_list_menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="command_arg_0">
+                        <property name="title">Arg 0</property>
+                        <property name="header-menu">command_list_menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="command_arg_1">
+                        <property name="title">Arg 1</property>
+                        <property name="header-menu">command_list_menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="command_arg_2">
+                        <property name="title">Arg 2</property>
+                        <property name="header-menu">command_list_menu</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkGrid">
+                <property name="row-spacing">5</property>
+                <property name="column-spacing">5</property>
+                <property name="margin-start">5</property>
+                <property name="margin-end">5</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">5</property>
+                    <layout>
+                      <property name="row">0</property>
+                      <property name="column">0</property>
+                    </layout>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Name</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="name-entry">
+                        <property name="width-chars">6</property>
+                        <property name="max-length">4</property>
+                        <property name="hexpand">true</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">5</property>
+                    <layout>
+                      <property name="row">0</property>
+                      <property name="column">1</property>
+                    </layout>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Arg0</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="arg0_entry">
+                        <property name="width-chars">4</property>
+                        <property name="max-length">8</property>
+                        <property name="hexpand">true</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">5</property>
+                    <layout>
+                      <property name="row">1</property>
+                      <property name="column">0</property>
+                    </layout>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Arg1</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="arg1_entry">
+                        <property name="width-chars">4</property>
+                        <property name="max-length">8</property>
+                        <property name="hexpand">true</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="orientation">horizontal</property>
+                    <property name="spacing">5</property>
+                    <layout>
+                      <property name="row">1</property>
+                      <property name="column">1</property>
+                    </layout>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Arg2</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkEntry" id="arg2_entry">
+                        <property name="width-chars">4</property>
+                        <property name="max-length">8</property>
+                        <property name="hexpand">true</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">5</property>
+                <property name="margin-start">5</property>
+                <property name="margin-end">5</property>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Add</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Delete</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Update</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Step</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Run</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="orientation">vertical</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
+            <property name="margin-end">5</property>
+            <property name="margin-bottom">5</property>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <property name="hscrollbar-policy">2</property>
+                <property name="propagate-natural-width">true</property>
+                <child>
+                  <object class="GtkColumnView">
+                    <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                    <property name="reorderable">false</property>
+                    <child>
+                      <object class="GtkColumnViewColumn">
+                        <property name="title">CA</property>
+                        <property name="header-menu">usercommand_list_menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn">
+                        <property name="title">Name</property>
+                        <property name="header-menu">usercommand_list_menu</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">5</property>
+                <property name="vexpand">false</property>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Add</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton">
+                    <property name="label">Delete</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </property>
+  </template>
+  <menu id="command_list_menu">
+  </menu>
+  <menu id="usercommand_list_menu">
+  </menu>
+</interface>

@@ -30,6 +30,9 @@ use register_view::RegisterView;
 use crate::emulator;
 
 mod imp {
+    use gtk::{prelude::*, glib::once_cell::sync::Lazy};
+    use glib::subclass::Signal;
+
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -59,13 +62,52 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for DebugPane {}
+    impl ObjectImpl for DebugPane {
+        fn signals() -> &'static [Signal] {
+            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+                vec![Signal::builder("reset-clicked")
+                     .param_types([gtk::Button::static_type()])
+                     .build(),
+                     Signal::builder("step-clicked")
+                     .param_types([gtk::Button::static_type()])
+                     .build(),
+                     Signal::builder("run-toggled")
+                     .param_types([gtk::ToggleButton::static_type()])
+                     .build()]
+            });
+            SIGNALS.as_ref()
+        }
+        fn constructed(&self) {
+            self.parent_constructed();
+            self.propagate_signals();
+        }
+    }
     impl WidgetImpl for DebugPane {}
     impl BoxImpl for DebugPane {}
     impl DebugPane {
         pub fn renew_state(&self, new_state: &emulator::State) {
             self.output_view.renew_state(new_state);
             self.register_view.renew_state(new_state);
+        }
+        fn propagate_signals(&self) {
+            let pane = self.obj().clone();
+            self.stepping_view.connect_closure("reset-clicked",
+                                               false,
+                                               glib::closure_local!(move |_: SteppingView, button: &gtk::Button| {
+                                                   pane.emit_by_name::<()>("reset-clicked", &[button]);
+                                               }));
+            let pane = self.obj().clone();
+            self.stepping_view.connect_closure("step-clicked",
+                                               false,
+                                               glib::closure_local!(move |_: SteppingView, button: &gtk::Button| {
+                                                   pane.emit_by_name::<()>("step-clicked", &[button]);
+                                               }));
+            let pane = self.obj().clone();
+            self.stepping_view.connect_closure("run-toggled",
+                                               false,
+                                               glib::closure_local!(move |_: SteppingView, button: &gtk::ToggleButton| {
+                                                   pane.emit_by_name::<()>("run-toggled", &[button]);
+                                               }));
         }
     }
 }
@@ -77,6 +119,7 @@ glib::wrapper! {
 
 impl DebugPane {
     pub fn new<P: glib::IsA<gtk::Application>>(application: &P) -> Self {
+        eprintln!("{:?}", application);
         glib::Object::builder()
             .property("application", application)
             .build()

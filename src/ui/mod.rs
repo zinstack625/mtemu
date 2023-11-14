@@ -25,6 +25,7 @@ pub mod debug_pane;
 pub mod line_builder_pane;
 pub mod stack_view;
 pub mod memory_view;
+pub mod command_view;
 
 pub trait PlainCommandRepr {
     fn from_command(_: &emulator::Command) -> Self;

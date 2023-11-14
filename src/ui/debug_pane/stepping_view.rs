@@ -21,6 +21,8 @@ use adw::subclass::prelude::*;
 use gtk::{gio, glib};
 
 mod imp {
+    use gtk::{glib::{subclass::Signal, once_cell::sync::Lazy}, prelude::{StaticType, ObjectExt}, traits::{ButtonExt, ToggleButtonExt}};
+
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -49,7 +51,31 @@ mod imp {
         }
     }
 
-    impl ObjectImpl for SteppingView {}
+    impl ObjectImpl for SteppingView {
+        fn signals() -> &'static [Signal] {
+            static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+                vec![Signal::builder("reset-clicked")
+                     .param_types([gtk::Button::static_type()])
+                     .build(),
+                     Signal::builder("step-clicked")
+                     .param_types([gtk::Button::static_type()])
+                     .build(),
+                     Signal::builder("run-toggled")
+                     .param_types([gtk::ToggleButton::static_type()])
+                     .build()]
+            });
+            SIGNALS.as_ref()
+        }
+        fn constructed(&self) {
+            self.parent_constructed();
+            let pane = self.obj().clone();
+            self.reset_button.connect_clicked(move |obj: &gtk::Button| { pane.emit_by_name::<()>("reset-clicked", &[obj]) });
+            let pane = self.obj().clone();
+            self.step_button.connect_clicked(move |obj: &gtk::Button| { pane.emit_by_name("step-clicked", &[obj]) });
+            let pane = self.obj().clone();
+            self.run_button.connect_toggled(move |obj: &gtk::ToggleButton| { pane.emit_by_name("run-toggled", &[obj]) });
+        }
+    }
     impl WidgetImpl for SteppingView {}
     impl BoxImpl for SteppingView {}
 }
