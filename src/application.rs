@@ -30,6 +30,8 @@ use adw::subclass::prelude::*;
 use gtk::{gio, glib};
 
 use crate::config::VERSION;
+use crate::emulator;
+use crate::emulator::MT1804Emulator;
 use crate::ui;
 use crate::ui::window::MtemuWindow;
 use crate::ui::PlainCommandRepr;
@@ -83,6 +85,9 @@ mod imp {
             obj.set_accels_for_action("app.quit", &["<primary>q"]);
             obj.set_accels_for_action("app.open-file", &["<primary>o"]);
             obj.set_accels_for_action("app.save-file", &["<primary>s"]);
+            obj.set_accels_for_action("app.copy-commands", &["<primary>c"]);
+            obj.set_accels_for_action("app.cut-commands", &["<primary>x"]);
+            obj.set_accels_for_action("app.paste-commands", &["<primary>v"]);
         }
 
         fn signals() -> &'static [glib::subclass::Signal] {
@@ -622,6 +627,15 @@ impl MtemuApplication {
         let show_memory_action = gio::ActionEntry::builder("show-memory")
             .activate(move |app: &Self, _, _| app.toggle_memory())
             .build();
+        let cut_commands_action = gio::ActionEntry::builder("cut-commands")
+            .activate(move |app: &Self, _, _| app.cut_commands())
+            .build();
+        let paste_commands_action = gio::ActionEntry::builder("paste-commands")
+            .activate(move |app: &Self, _, _| app.paste_commands())
+            .build();
+        let copy_commands_action = gio::ActionEntry::builder("copy-commands")
+            .activate(move |app: &Self, _, _| app.copy_commands())
+            .build();
         self.add_action_entries([quit_action,
                                  about_action,
                                  open_file_action,
@@ -629,7 +643,10 @@ impl MtemuApplication {
                                  show_debug_action,
                                  show_builder_action,
                                  show_stack_action,
-                                 show_memory_action]);
+                                 show_memory_action,
+                                 cut_commands_action,
+                                 paste_commands_action,
+                                 copy_commands_action]);
     }
 
     fn show_about(&self) {
@@ -755,6 +772,140 @@ impl MtemuApplication {
         });
         self.emit_by_name::<()>("memory-changed", &[&imp::BoxedMemory(memory)]);
     }
+
+    fn cut_commands(&self) {
+        let window = self.active_window().unwrap();
+        let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
+        let Some(model) = window.imp().code_view_pane.imp().code_list.model() else { return };
+        let Some(model) = model.downcast_ref::<gtk::MultiSelection>() else { return };
+        let emul = self.get_emulator();
+        let mut cut_commands = Vec::<emulator::Command>::with_capacity(model.n_items() as usize);
+        for ind in 0..model.n_items() {
+            if model.is_selected(ind) {
+                let cmd = {
+                    let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                    let cmd = emul.get_command(ind as usize);
+                    emul.remove_command(ind as usize);
+                    cmd
+                };
+                cut_commands.push(cmd);
+            }
+        }
+        let new_commands = imp::BoxedCommands({
+            let Some(ref emul) = *emul.borrow() else { return };
+            let new_cmd_cnt = emul.commands_count();
+            let mut cmds = Vec::<emulator::Command>::with_capacity(new_cmd_cnt);
+            for i in 0..new_cmd_cnt {
+                cmds.push(emul.get_command(i));
+            }
+            Rc::new(cmds)
+        });
+        self.emit_by_name::<()>("commands-appeared", &[&new_commands]);
+        let Some(clipboard) = gtk::gdk::Display::default().and_then(|disp| { Some(disp.clipboard()) }) else { return };
+        clipboard.set_text(&String::from_iter(
+            cut_commands
+                .into_iter()
+                .map(|cmd| {
+                    let words = cmd.get_words().expect("Failed getting words!");
+                    format!(
+                        "{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}\n",
+                        words[0], words[1], words[2], words[3], words[4],
+                        words[5], words[6], words[7], words[8], words[9]
+                    )
+                })
+        ));
+    }
+
+    fn copy_commands(&self) {
+        let window = self.active_window().unwrap();
+        let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
+        let Some(model) = window.imp().code_view_pane.imp().code_list.model() else { return };
+        let Some(model) = model.downcast_ref::<gtk::MultiSelection>() else { return };
+        let emul = self.get_emulator();
+        let mut cut_commands = Vec::<emulator::Command>::with_capacity(model.n_items() as usize);
+        for ind in 0..model.n_items() {
+            if model.is_selected(ind) {
+                let cmd = {
+                    let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                    let cmd = emul.get_command(ind as usize);
+                    cmd
+                };
+                cut_commands.push(cmd);
+            }
+        }
+        let Some(clipboard) = gtk::gdk::Display::default().and_then(|disp| { Some(disp.clipboard()) }) else { return };
+        clipboard.set_text(&String::from_iter(
+            cut_commands
+                .into_iter()
+                .map(|cmd| {
+                    let words = cmd.get_words().expect("Failed getting words!");
+                    format!(
+                        "{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}{:0>4b}\n",
+                        words[0], words[1], words[2], words[3], words[4],
+                        words[5], words[6], words[7], words[8], words[9]
+                    )
+                })
+        ));
+    }
+
+    fn paste_commands(&self) {
+        let window = self.active_window().unwrap();
+        let app = self.clone();
+
+        let Some(clipboard) = gtk::gdk::Display::default().and_then(|disp| { Some(disp.clipboard()) }) else { return };
+        clipboard.read_text_async(gio::Cancellable::NONE, move |result| {
+            let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
+            let Some(model) = window.imp().code_view_pane.imp().code_list.model() else { return };
+            let Some(model) = model.downcast_ref::<gtk::MultiSelection>() else { return };
+            let selected = {
+                let mut selected = None;
+                for ind in 0..model.n_items() {
+                    if model.is_selected(ind) {
+                        selected = Some(ind);
+                        break
+                    }
+                }
+                selected
+            }.unwrap_or(0);
+            let Ok(data) = result else { return };
+            let Some(string) = data else { return };
+            let cmd_words = string
+                .lines()
+                .filter_map(|line| {
+                    if line.len() != 40 || i32::from_str_radix(line, 2).is_err() {
+                        return None;
+                    }
+                    let mut words = Vec::<i32>::with_capacity(10);
+                    for i in (0..=line.len()-4).step_by(4) {
+                        words.push(i32::from_str_radix(&line[i..i+4], 2).unwrap_or(0));
+                    }
+                    Some(words)
+                })
+                .collect::<Vec<Vec<i32>>>();
+            let emul = app.get_emulator();
+            let new_commands = imp::BoxedCommands({
+                let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                cmd_words
+                    .into_iter()
+                    .enumerate()
+                    .for_each(|(ind, words)| {
+                        let mut words_boxed = Box::new(words);
+                        let cmd = emulator::Command::new(0, words_boxed.as_mut());
+                        // +1 is needed to insert command after selected, not before
+                        emul.add_command(selected as usize + ind + 1, &cmd);
+                        drop(words_boxed);
+                    });
+                let new_cmd_cnt = emul.commands_count();
+                let mut cmds = Vec::<emulator::Command>::with_capacity(new_cmd_cnt);
+                for i in 0..new_cmd_cnt {
+                    cmds.push(emul.get_command(i));
+                }
+                Rc::new(cmds)
+            });
+            app.emit_by_name::<()>("commands-appeared", &[&new_commands]);
+        });
+    }
+
     pub fn set_emulator(&self, emul: Box<dyn crate::emulator::MT1804Emulator>) {
         self.imp().set_emulator(emul);
     }
