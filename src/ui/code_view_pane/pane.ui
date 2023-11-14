@@ -14,6 +14,7 @@
             <property name="vexpand">true</property>
             <property name="reorderable">false</property>
             <property name="show-row-separators">true</property>
+            <property name="enable-rubberband">true</property>
             <child>
               <object class="GtkColumnViewColumn" id="code_list_addr">
                 <property name="title">Address</property>
