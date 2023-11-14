@@ -82,6 +82,10 @@
         <attribute name="action">app.show-memory</attribute>
       </item>
       <item>
+        <attribute name="label" translatable="yes">_Show commands</attribute>
+        <attribute name="action">app.show-commands</attribute>
+      </item>
+      <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>
         <attribute name="action">app.preferences</attribute>
       </item>

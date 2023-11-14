@@ -47,6 +47,7 @@ mod imp {
         emulator: Arc<RefCell<Option<Box<dyn crate::emulator::MT1804Emulator>>>>,
         pub stack_window: RefCell<Option<u32>>,
         pub memory_window: RefCell<Option<u32>>,
+        pub commands_window: RefCell<Option<u32>>,
     }
 
     #[glib::object_subclass]
@@ -304,10 +305,10 @@ mod imp {
             let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
             let button_view = window.imp().debug_pane.imp().stepping_view.imp();
             let app_clone = app.clone();
-            button_view.step_button.connect_clicked(move |_| {
-                let emul = app_clone.get_emulator();
+            let executor = move |button: &gtk::Button, app: &super::MtemuApplication| -> bool {
+                let emul = app.get_emulator();
                 let prev_cmd = {
-                    let Some(ref mut emul) = *emul.borrow_mut() else { return };
+                    let Some(ref mut emul) = *emul.borrow_mut() else { return false; };
                     let cmd_count = emul.commands_count();
                     let mut pc = emul.get_pc();
                     // just give me the goddamn exception...
@@ -316,45 +317,52 @@ mod imp {
                     }
                     if cmd_count == 0 || pc >= cmd_count {
                         // TODO: emit rom end
-                        return;
+                        button.set_sensitive(true);
+                        return false;
                     }
                     let prev_cmd = emul.get_command(pc);
                     emul.exec_one();
                     prev_cmd
                 };
-                let state = BoxedState({
-                    let Some(ref emul) = *emul.borrow() else { todo!() };
-                    Rc::new(emul.get_state())
-                });
-                let command = BoxedCommand({
-                    let emul = app_clone.get_emulator();
-                    let Some(ref emul) = *emul.borrow() else { todo!() };
-                    Rc::new(emul.get_command(state.0.program_counter))
-                });
-                app_clone.emit_by_name::<()>("state-changed", &[&state]);
-                app_clone.emit_by_name::<()>("command-changed", &[&command]);
-                let Some(words) = prev_cmd.get_words() else { return };
+                let Some(words) = prev_cmd.get_words() else { return false; };
                 match words[3] {
                     4..=6 | 9 | 10 => {
                         let stack = Rc::new({
-                            let Some(ref emul) = *emul.borrow() else { return };
+                            let Some(ref emul) = *emul.borrow() else { return false; };
                             emul.get_stack()
                         }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
-                        app_clone.emit_by_name::<()>("stack-changed", &[&BoxedStack(stack)]);
+                        app.emit_by_name::<()>("stack_changed", &[&BoxedStack(stack)]);
                     }
                     _ => {}
                 }
                 match words[6] {
                     12 => {
                         let memory = Rc::new({
-                           let Some(ref emul) = *emul.borrow() else { return };
+                            let Some(ref emul) = *emul.borrow() else { return false; };
                             emul.get_mem().into_iter().map(|val| val as u32).collect::<Vec<u32>>()
                         });
-                        app_clone.emit_by_name::<()>("memory-changed", &[&BoxedMemory(memory)]);
+                        app.emit_by_name::<()>("memory-changed", &[&BoxedMemory(memory)]);
                     }
                     _ => {}
                 }
-            });
+                let state = BoxedState({
+                    let Some(ref emul) = *emul.borrow() else { return false; };
+                    Rc::new(emul.get_state())
+                });
+                app.emit_by_name::<()>("state-changed", &[&state]);
+                let command = BoxedCommand({
+                    let Some(ref emul) = *emul.borrow() else { return false; };
+                    if emul.commands_count() <= state.0.program_counter {
+                        // TODO: emit rom end
+                        button.set_sensitive(true);
+                        return false;
+                    }
+                    Rc::new(emul.get_command(state.0.program_counter))
+                });
+                app.emit_by_name::<()>("command-changed", &[&command]);
+                return true;
+            };
+            button_view.step_button.connect_clicked(move |button| { let _ = executor(button, &app_clone); });
             let app_clone = app.clone();
             button_view.reset_button.connect_clicked(move |_| {
                 let emul = app_clone.get_emulator();
@@ -396,62 +404,10 @@ mod imp {
                 context.spawn_local(glib::clone!(@weak app_clone => async move {
                     button_clone.set_sensitive(false);
                     for _ in 0..200 {
-                        let emul = app_clone.get_emulator();
-                        let prev_cmd = {
-                            let Some(ref mut emul) = *emul.borrow_mut() else { return };
-                            let cmd_count = emul.commands_count();
-                            let mut pc = emul.get_pc();
-                            // just give me the goddamn exception...
-                            if pc == usize::MAX {
-                                pc = 0;
-                            }
-                            if cmd_count == 0 || pc >= cmd_count {
-                                // TODO: emit rom end
-                                button_clone.set_sensitive(true);
-                                return;
-                            }
-                            let prev_cmd = emul.get_command(pc);
-                            emul.exec_one();
-                            prev_cmd
-                        };
-                        let Some(words) = prev_cmd.get_words() else { return };
-                        match words[3] {
-                            4..=6 | 9 | 10 => {
-                                let stack = Rc::new({
-                                    let Some(ref emul) = *emul.borrow() else { return };
-                                    emul.get_stack()
-                                }.into_iter().map(|val| { val as u32 }).collect::<Vec<u32>>());
-                                app_clone.emit_by_name::<()>("stack_changed", &[&BoxedStack(stack)]);
-                            }
-                            _ => {}
+                        if !executor(&button_clone, &app_clone) {
+                            button_clone.set_sensitive(true);
+                            return;
                         }
-                        match words[6] {
-                            12 => {
-                                let memory = Rc::new({
-                                    let Some(ref emul) = *emul.borrow() else { return };
-                                    emul.get_mem().into_iter().map(|val| val as u32).collect::<Vec<u32>>()
-                                });
-                                app_clone.emit_by_name::<()>("memory-changed", &[&BoxedMemory(memory)]);
-                            }
-                            _ => {}
-                        }
-                        let state = BoxedState({
-                            let Some(ref emul) = *emul.borrow() else { todo!() };
-
-                            Rc::new(emul.get_state())
-                        });
-                        app_clone.emit_by_name::<()>("state-changed", &[&state]);
-                        let command = BoxedCommand({
-                            let Some(ref emul) = *emul.borrow() else { todo!() };
-                            if emul.commands_count() <= state.0.program_counter {
-                                // TODO: emit rom end
-                                button_clone.set_sensitive(true);
-                                return;
-                            }
-                            Rc::new(emul.get_command(state.0.program_counter))
-                        });
-                        app_clone.emit_by_name::<()>("command-changed", &[&command]);
-
                         glib::timeout_future(std::time::Duration::from_millis(20)).await;
                     }
                     button_clone.set_sensitive(true);
@@ -622,6 +578,9 @@ impl MtemuApplication {
         let show_memory_action = gio::ActionEntry::builder("show-memory")
             .activate(move |app: &Self, _, _| app.toggle_memory())
             .build();
+        let show_commands_action = gio::ActionEntry::builder("show-commands")
+            .activate(move |app: &Self, _, _| app.toggle_commands())
+            .build();
         self.add_action_entries([quit_action,
                                  about_action,
                                  open_file_action,
@@ -629,7 +588,8 @@ impl MtemuApplication {
                                  show_debug_action,
                                  show_builder_action,
                                  show_stack_action,
-                                 show_memory_action]);
+                                 show_memory_action,
+                                 show_commands_action]);
     }
 
     fn show_about(&self) {
@@ -754,6 +714,22 @@ impl MtemuApplication {
             emul.get_mem().into_iter().map(|val| val as u32).collect::<Vec<u32>>()
         });
         self.emit_by_name::<()>("memory-changed", &[&imp::BoxedMemory(memory)]);
+    }
+    fn toggle_commands(&self) {
+        if let Some(commands_id) = *self.imp().commands_window.borrow() {
+            if let Some(window) = self.window_by_id(commands_id) {
+                self.remove_window(&window);
+                window.destroy();
+                return;
+            }
+        }
+        let commands_window = {
+            let window = ui::command_view::CommandWindow::new(self);
+            self.add_window(&window);
+            self.imp().commands_window.replace(Some(window.id()));
+            window
+        };
+        commands_window.present();
     }
     pub fn set_emulator(&self, emul: Box<dyn crate::emulator::MT1804Emulator>) {
         self.imp().set_emulator(emul);

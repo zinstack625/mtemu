@@ -19,6 +19,7 @@
     <file>ui/line_builder_pane/load_type_table_entries.json</file>
     <file preprocess="xml-stripblanks">ui/stack_view/window.ui</file>
     <file preprocess="xml-stripblanks">ui/memory_view/window.ui</file>
+    <file preprocess="xml-stripblanks">ui/command_view/window.ui</file>
   </gresource>
 </gresources>
 
