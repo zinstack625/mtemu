@@ -87,7 +87,7 @@ namespace mtemu
         }
 
         private DeviceInfo currentDeviceInfo_ = new DeviceInfo();
-        private SerialPort deviceComPort_ = new SerialPort();
+        private SerialPort deviceComPort_;// = new SerialPort();
         private bool isDeviceOpened_ = false;
 
 

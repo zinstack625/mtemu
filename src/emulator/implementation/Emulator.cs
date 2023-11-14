@@ -93,9 +93,9 @@ namespace mtemu
             prevP_ = false;
         }
 
-        public Emulator()//PortExtender portExtender)
+        public Emulator(PortExtender portExtender)
         {
-            //portExtender_ = portExtender;
+            portExtender_ = portExtender;
             Reset();
         }
 

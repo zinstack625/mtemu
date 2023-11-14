@@ -13,7 +13,7 @@ engine = custom_target(
 	'engine',
 	output: 'engine.dll',
 	input: file_list,
-	command: [comp, '-t:library', '@INPUT@', '-out:@OUTPUT@'],
+	command: [comp, '-t:library', '@INPUT@', '-debug', '-out:@OUTPUT@'],
 	install: true,
 	install_dir: 'subdir',
 )
