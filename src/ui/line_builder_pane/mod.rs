@@ -243,21 +243,37 @@ mod imp {
                     self.pointer_size.set_sensitive(false);
                     self.pointer_type.set_sensitive(false);
                     self.interface_type.set_sensitive(false);
+                    self.op_type.set_sensitive(true);
+                    self.load_type.set_sensitive(true);
+                    self.m0_select.set_sensitive(true);
+                    self.m1_select.set_sensitive(true);
                 },
                 0b1011 => {
                     self.pointer_size.set_sensitive(false);
                     self.pointer_type.set_sensitive(true);
                     self.interface_type.set_sensitive(false);
+                    self.op_type.set_sensitive(false);
+                    self.load_type.set_sensitive(false);
+                    self.m0_select.set_sensitive(false);
+                    self.m1_select.set_sensitive(false);
                 },
                 0b1100..=0b1111 => {
                     self.pointer_size.set_sensitive(true);
                     self.pointer_type.set_sensitive(false);
                     self.interface_type.set_sensitive(false);
+                    self.op_type.set_sensitive(false);
+                    self.load_type.set_sensitive(false);
+                    self.m0_select.set_sensitive(false);
+                    self.m1_select.set_sensitive(false);
                 },
                 _ => {
                     self.pointer_size.set_sensitive(false);
                     self.pointer_type.set_sensitive(false);
                     self.interface_type.set_sensitive(false);
+                    self.op_type.set_sensitive(false);
+                    self.load_type.set_sensitive(false);
+                    self.m0_select.set_sensitive(false);
+                    self.m1_select.set_sensitive(false);
                 },
             }
             // let Some(selection) = self.pointer_type.model() else { return };
