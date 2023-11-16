@@ -183,7 +183,7 @@
           </object>
         </child>
         <child>
-          <object class="GtkBox" id="m_select">
+          <object class="GtkBox">
             <property name="orientation">horizontal</property>
             <property name="vexpand">true</property>
             <property name="hexpand">true</property>
@@ -192,12 +192,12 @@
               <property name="column">2</property>
             </layout>
             <child>
-              <object class="GtkCheckButton">
+              <object class="GtkCheckButton" id="m0_select">
                 <property name="label">M0</property>
               </object>
             </child>
             <child>
-              <object class="GtkCheckButton">
+              <object class="GtkCheckButton" id="m1_select">
                 <property name="label">M1</property>
               </object>
             </child>

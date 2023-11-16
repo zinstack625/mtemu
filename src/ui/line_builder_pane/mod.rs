@@ -157,6 +157,10 @@ mod imp {
         #[template_child]
         pub pointer_size_name: TemplateChild<gtk::ColumnViewColumn>,
         #[template_child]
+        pub m0_select: TemplateChild<gtk::CheckButton>,
+        #[template_child]
+        pub m1_select: TemplateChild<gtk::CheckButton>,
+        #[template_child]
         pub op_type: TemplateChild<gtk::ColumnView>,
         #[template_child]
         pub op_type_code: TemplateChild<gtk::ColumnViewColumn>,
@@ -169,7 +173,7 @@ mod imp {
         #[template_child]
         pub load_type_code: TemplateChild<gtk::ColumnViewColumn>,
         #[template_child]
-        pub load_type_name: TemplateChild<gtk::ColumnViewColumn>
+        pub load_type_name: TemplateChild<gtk::ColumnViewColumn>,
     }
 
     #[glib::object_subclass]
@@ -211,9 +215,19 @@ mod imp {
             let Some(selection) = self.pointer_type.model() else { return cmd; };
             cmd.set_pointer(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
             let Some(selection) = self.op_type.model() else { return cmd; };
-            cmd.set_args(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let mut args = selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8;
+            let m0 = self.m0_select.is_active();
+            if m0 {
+                args |= 0b1000;
+            }
+            cmd.set_args(args);
             let Some(selection) = self.load_type.model() else { return cmd; };
-            cmd.set_load(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let m1 = self.m1_select.is_active();
+            let mut load = selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8;
+            if m1 {
+                load |= 0b1000;
+            }
+            cmd.set_load(load);
             let Some(selection) = self.pointer_size.model() else { return cmd; };
             cmd.set_pointer_size(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
             cmd
@@ -222,15 +236,40 @@ mod imp {
             let Some(selection) = self.jump_type.model() else { return };
             selection.select_item(new_command.jump.get() as u32, true);
             let Some(selection) = self.alu_instr_type.model() else { return };
-            selection.select_item(new_command.func.get() as u32, true);
+            let func = new_command.func.get() as u32;
+            selection.select_item(func, true);
+            match func {
+                0b0000..=0b1010 => {
+                    self.pointer_size.set_sensitive(false);
+                    self.pointer_type.set_sensitive(false);
+                    self.interface_type.set_sensitive(false);
+                },
+                0b1011 => {
+                    self.pointer_size.set_sensitive(false);
+                    self.pointer_type.set_sensitive(true);
+                    self.interface_type.set_sensitive(false);
+                },
+                0b1100..=0b1111 => {
+                    self.pointer_size.set_sensitive(true);
+                    self.pointer_type.set_sensitive(false);
+                    self.interface_type.set_sensitive(false);
+                },
+                _ => {
+                    self.pointer_size.set_sensitive(false);
+                    self.pointer_type.set_sensitive(false);
+                    self.interface_type.set_sensitive(false);
+                },
+            }
             // let Some(selection) = self.pointer_type.model() else { return };
             // selection.select_item(, unselect_rest)
             let Some(selection) = self.op_type.model() else { return };
-            selection.select_item(new_command.args.get() as u32, true);
+            selection.select_item((new_command.args.get() & 0b0111) as u32, true);
+            self.m0_select.set_active(new_command.args.get() & 0b1000 != 0);
             let Some(selection) = self.load_type.model() else { return };
-            selection.select_item(new_command.load.get() as u32, true);
+            selection.select_item((new_command.load.get() & 0b0111) as u32, true);
+            self.m1_select.set_active(new_command.load.get() & 0b1000 != 0);
             let Some(selection) = self.pointer_type.model() else { return };
-            selection.select_item(new_command.pointer.get() as u32, true);
+            selection.select_item(new_command.pointer.get() as u32 , true);
             let Some(selection) = self.pointer_size.model() else { return };
             selection.select_item(new_command.pointer_size.get() as u32, true);
         }
