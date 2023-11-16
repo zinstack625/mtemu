@@ -202,12 +202,10 @@ mod imp {
             let Some(window) = window.downcast_ref::<MtemuWindow>() else { return };
             let _line_builder_pane = window.imp().line_builder_pane.clone();
             let cmd_editor = window.imp().code_view_pane.imp().instruction_editor.clone();
+            let line_builder_pane = window.imp().line_builder_pane.clone();
             app.connect_closure("command-changed", false, glib::closure_local!(move |_: super::MtemuApplication, cmd: BoxedCommand| {
-                // TODO: currently causes a recursion that overflows the stack
-                // command-changed signal should be split into one that is
-                // called when builder selection is changed and one that is
-                // called when code list and editor have changes
-                //line_builder_pane.renew_command(&ui::line_builder_pane::CommandRepr::from_command(&cmd.0));
+                // TODO: it's fixed somehow? need to keep a close eye on this
+                line_builder_pane.renew_command(&ui::line_builder_pane::CommandRepr::from_command(&cmd.0));
                 cmd_editor.renew_command(&ui::code_view_pane::editor::CommandRepr::from_command(&cmd.0));
             }));
         }
@@ -274,7 +272,7 @@ mod imp {
             let cmd_builder = window.imp().line_builder_pane.imp();
             let cmd_builder_clone = cmd_builder.obj().clone();
             let cmd_editor = window.imp().code_view_pane.imp().instruction_editor.clone();
-            let closure = glib::closure_local!(move |_: SingleSelection, _: u32, _: u32| {
+            let closure = move || {
                 let mut new_words = cmd_builder_clone
                     .get_command()
                     .get_words()
@@ -287,21 +285,31 @@ mod imp {
                 new_words[9] = cur_cmd[9] as i32;
                 let cmd = emulator::Command::new(0, new_words.as_mut_slice());
                 app.emit_by_name::<()>("command-changed", &[&BoxedCommand(Rc::new(cmd))]);
+            };
+            let closure_clone = closure.clone();
+            let sel_closure = glib::closure_local!(move |_: SingleSelection, _: u32, _: u32| {
+               closure_clone();
+            });
+            let closure_clone = closure.clone();
+            let toggle_closure = glib::closure_local!(move |_: gtk::CheckButton| {
+                closure_clone();
             });
             let Some(model) = cmd_builder.jump_type.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
             let Some(model) = cmd_builder.alu_instr_type.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
             let Some(model) = cmd_builder.pointer_type.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
             let Some(model) = cmd_builder.interface_type.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
             let Some(model) = cmd_builder.pointer_size.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
             let Some(model) = cmd_builder.op_type.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
             let Some(model) = cmd_builder.load_type.model() else { return };
-            model.connect_closure("selection-changed", false, closure.clone());
+            model.connect_closure("selection-changed", false, sel_closure.clone());
+            cmd_builder.m0_select.connect_closure("toggled", false, toggle_closure.clone());
+            cmd_builder.m1_select.connect_closure("toggled", false, toggle_closure.clone());
         }
         fn handle_debug_buttons(&self) {
             let app = self.obj().clone();

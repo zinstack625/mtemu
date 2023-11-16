@@ -23,14 +23,14 @@ use gtk::glib::Properties;
 use gtk::{gio, glib};
 
 use crate::emulator;
-use crate::ui::{PlainCommandRepr};
+use crate::ui::PlainCommandRepr;
 
 mod imp {
     use gtk::{prelude::ObjectExt, traits::{EntryExt, EditableExt}, glib::closure_local};
     use std::cell::Cell;
     use super::*;
 
-    #[derive(Default, Properties)]
+    #[derive(Debug, Default, Properties)]
     #[properties(wrapper_type = super::CommandRepr)]
     pub struct CommandRepr {
         #[property(get, set)]
@@ -230,5 +230,4 @@ impl CommandRepr {
     pub fn new() -> Self {
         glib::Object::builder().build()
     }
-
 }
