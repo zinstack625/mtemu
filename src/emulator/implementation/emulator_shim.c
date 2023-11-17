@@ -39,7 +39,7 @@ Emulator* create_emulator() {
   /* MonoAssembly *mtemu_emu = mono_domain_assembly_open( */
   /*     instance.dom, PKGDATADIR "/engine.dll"); */
   MonoAssembly *mtemu_emu = mono_domain_assembly_open(
-      instance->dom, "src/emulator/implementation/engine.dll");
+      instance->dom, PKGDATADIR "/engine.dll");
   instance->im = mono_assembly_get_image(mtemu_emu);
   /* TODO: currently broken for whatever reason, will dig deeper later */
   /* MonoClass *PortExtender = mono_class_from_name(im, "mtemu",

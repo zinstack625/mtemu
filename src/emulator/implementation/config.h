@@ -1,0 +1,1 @@
+#define PKGDATADIR "/app/subdir"
