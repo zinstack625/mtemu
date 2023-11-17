@@ -44,8 +44,8 @@
               <object class="GtkBox" id="load_type_box">
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel">
-                    <property name="label">M1</property>
+                  <object class="GtkLabel" id="load_type_label">
+                    <property name="label">M1|I6-9</property>
                   </object>
                 </child>
                 <child>
@@ -58,28 +58,11 @@
               </object>
             </child>
             <child>
-              <object class="GtkBox" id="op_type_box">
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkLabel">
-                    <property name="label">M0</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="op_type">
-                    <property name="width-chars">4</property>
-                    <property name="max-width-chars">4</property>
-                    <property name="max-length">4</property>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
               <object class="GtkBox" id="instr_type_box">
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel">
-                    <property name="label">C0</property>
+                  <object class="GtkLabel" id="instr_type_label">
+                    <property name="label">C0|I3-5</property>
                   </object>
                 </child>
                 <child>
@@ -92,10 +75,27 @@
               </object>
             </child>
             <child>
-              <object class="GtkBox" id="a_arg_box">
+              <object class="GtkBox">
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="op_type_label">
+                    <property name="label">M0|I0-2</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="op_type">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel" id="a_arg_label">
                     <property name="label">A</property>
                   </object>
                 </child>
@@ -112,7 +112,7 @@
               <object class="GtkBox" id="b_arg_box">
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="b_arg_label">
                     <property name="label">B</property>
                   </object>
                 </child>
@@ -129,7 +129,7 @@
               <object class="GtkBox" id="d_arg_box">
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkLabel">
+                  <object class="GtkLabel" id="d_arg_label">
                     <property name="label">D</property>
                   </object>
                 </child>

@@ -280,7 +280,9 @@ mod imp {
                     .map(|word| { word as i32 })
                     .collect::<Vec<i32>>();
                 let cur_cmd = cmd_editor.get_codes();
-                new_words[7] = cur_cmd[7] as i32;
+                if !(new_words[6] == 0b1011 && new_words[5] == 0b1000) {
+                    new_words[7] = cur_cmd[7] as i32;
+                }
                 new_words[8] = cur_cmd[8] as i32;
                 new_words[9] = cur_cmd[9] as i32;
                 let cmd = emulator::Command::new(0, new_words.as_mut_slice());

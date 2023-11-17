@@ -78,15 +78,27 @@ mod imp {
         #[template_child]
         load_type: TemplateChild<gtk::Entry>,
         #[template_child]
+        load_type_label: TemplateChild<gtk::Label>,
+        #[template_child]
         op_type: TemplateChild<gtk::Entry>,
+        #[template_child]
+        op_type_label: TemplateChild<gtk::Label>,
         #[template_child]
         instr_type: TemplateChild<gtk::Entry>,
         #[template_child]
+        instr_type_label: TemplateChild<gtk::Label>,
+        #[template_child]
         a_arg: TemplateChild<gtk::Entry>,
+        #[template_child]
+        a_arg_label: TemplateChild<gtk::Label>,
         #[template_child]
         b_arg: TemplateChild<gtk::Entry>,
         #[template_child]
+        b_arg_label: TemplateChild<gtk::Label>,
+        #[template_child]
         d_arg: TemplateChild<gtk::Entry>,
+        #[template_child]
+        d_arg_label: TemplateChild<gtk::Label>,
     }
 
     #[glib::object_subclass]
@@ -155,6 +167,66 @@ mod imp {
             self.load_type.property::<gtk::EntryBuffer>("buffer").set_property("text", format!("{:0>4b}", cmd.load()));
             self.op_type.property::<gtk::EntryBuffer>("buffer").set_property("text", format!("{:0>4b}", cmd.args()));
             self.instr_type.property::<gtk::EntryBuffer>("buffer").set_property("text", format!("{:0>4b}", cmd.func()));
+            match cmd.func() {
+                0b0000..=0b1010 => {
+                    self.load_type.set_sensitive(true);
+                    self.load_type_label.set_label("M1|I6-9");
+                    self.instr_type_label.set_label("C0|I3-5");
+                    self.op_type_label.set_label("M0|I0-2");
+                    self.a_arg.set_sensitive(true);
+                    self.a_arg_label.set_label("A");
+                    self.b_arg_label.set_label("B");
+                    self.d_arg.set_sensitive(true);
+                    self.d_arg_label.set_label("D");
+                },
+                0b1011 => {
+                    self.load_type.set_sensitive(false);
+                    self.load_type_label.set_label("");
+                    self.instr_type_label.set_label("F");
+                    match cmd.args() {
+                        0b1000 => {
+                            self.op_type_label.set_label("PT");
+                            self.a_arg_label.set_label("Port");
+                            self.b_arg_label.set_label("");
+                            self.b_arg.set_sensitive(false);
+                        },
+                        _ => {
+                            self.op_type_label.set_label("PT|Inc");
+                            self.a_arg_label.set_label("PtrHigh");
+                            self.b_arg_label.set_label("PtrLow");
+                        },
+                    }
+                    self.a_arg.set_sensitive(true);
+                    self.d_arg.set_sensitive(false);
+                    self.d_arg_label.set_label("");
+                },
+                0b1100..=0b1111 => {
+                    self.load_type.set_sensitive(false);
+                    self.load_type_label.set_label("");
+                    self.instr_type_label.set_label("F");
+                    self.op_type_label.set_label("PT");
+                    match cmd.args() {
+                        0b0000 => {
+                            self.a_arg.set_sensitive(false);
+                            self.b_arg.set_sensitive(true);
+                        },
+                        0b0001 => {
+                            self.a_arg.set_sensitive(true);
+                            self.b_arg.set_sensitive(false);
+                        },
+                        0b0010 => {
+                            self.a_arg.set_sensitive(true);
+                            self.b_arg.set_sensitive(true);
+                        },
+                        _ => {},
+                    }
+                    self.a_arg_label.set_label("A");
+                    self.b_arg_label.set_label("B");
+                    self.d_arg.set_sensitive(false);
+                    self.d_arg_label.set_label("D");
+                },
+                _ => {},
+            }
             self.a_arg.property::<gtk::EntryBuffer>("buffer").set_property("text", format!("{:0>4b}", cmd.a_arg()));
             self.b_arg.property::<gtk::EntryBuffer>("buffer").set_property("text", format!("{:0>4b}", cmd.b_arg()));
             self.d_arg.property::<gtk::EntryBuffer>("buffer").set_property("text", format!("{:0>4b}", cmd.d_arg()));

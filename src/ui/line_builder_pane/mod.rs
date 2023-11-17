@@ -75,7 +75,7 @@ macro_rules! parse_res {
 }
 
 mod imp {
-    use std::{collections::HashMap, cell::Cell};
+    use std::{collections::HashMap, cell::{Cell, RefCell}};
 
     use gtk::{
         glib::Properties,
@@ -201,6 +201,20 @@ mod imp {
             self.prepare_pointer_size_table("/org/bmstu/mtemu/ui/line_builder_pane/pointer_size_table_entries.json");
             self.prepare_operand_type_table("/org/bmstu/mtemu/ui/line_builder_pane/operand_type_table_entries.json");
             self.prepare_load_type_table("/org/bmstu/mtemu/ui/line_builder_pane/load_type_table_entries.json");
+            // self.pointer_type.connect_closure("selection-changed", false, glib::closure_local!(move |sel: gtk::SingleSelection, _: u32, _: u32| {
+            //     let Some(item) = sel.item(sel.selected()) else { return };
+            //     let Ok(item) = item.downcast_ref::<PointerTypeEntry>() else { return };
+            //     match item.get_ca() {
+            //         0b1000 => {
+            //             if self.get_command().func() == 0b1011 {
+            //                 self.interface_type.set_sensitive(true);
+            //             } else {
+            //                 self.interface_type.set_sensitive(false);
+            //             }
+            //         }
+            //         _ => { self.interface_type.set_sensitive(false); },
+            //     }
+            // }));
         }
     }
     impl WidgetImpl for LineBuilderPane {}
@@ -213,7 +227,15 @@ mod imp {
             let Some(selection) = self.alu_instr_type.model() else { return cmd; };
             cmd.set_func(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
             let Some(selection) = self.pointer_type.model() else { return cmd; };
-            cmd.set_pointer(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+            let ptr_selected_pos = selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected();
+            let ptr = {
+                let mut ptr = None;
+                if let Some(item) = selection.item(ptr_selected_pos) {
+                    let _ = u8::from_str_radix(&item.downcast_ref::<PointerTypeEntry>().unwrap().get_ca(), 2).is_ok_and(|x| { ptr = Some(x); true });
+                }
+                ptr
+            };
+            cmd.set_pointer(ptr.unwrap_or(0));
             let Some(selection) = self.op_type.model() else { return cmd; };
             let mut args = selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8;
             let m0 = self.m0_select.is_active();
@@ -230,6 +252,28 @@ mod imp {
             cmd.set_load(load);
             let Some(selection) = self.pointer_size.model() else { return cmd; };
             cmd.set_pointer_size(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+
+            match cmd.func() {
+                0b0000..=0b1010 => {},
+                0b1011 => {
+                    cmd.set_args(cmd.pointer());
+                    match cmd.pointer() {
+                        0b1000 => {
+                            let Some(selection) = self.interface_type.model() else { return cmd; };
+                            cmd.set_a_arg(selection.downcast_ref::<gtk::SingleSelection>().unwrap().selected() as u8);
+                        }
+                        _ => {
+                            cmd.set_a_arg(0);
+                        },
+                    }
+                }
+                0b1100..=0b1111 => {
+                    cmd.set_args(cmd.pointer_size());
+                }
+                _ => {
+                    cmd.set_a_arg(0);
+                }
+            }
             cmd
         }
         pub fn renew_command(&self, new_command: &CommandRepr) {
@@ -251,7 +295,10 @@ mod imp {
                 0b1011 => {
                     self.pointer_size.set_sensitive(false);
                     self.pointer_type.set_sensitive(true);
-                    self.interface_type.set_sensitive(false);
+                    match new_command.args.get() {
+                        0b1000 => { self.interface_type.set_sensitive(true); }
+                        _ => { self.interface_type.set_sensitive(false); }
+                    }
                     self.op_type.set_sensitive(false);
                     self.load_type.set_sensitive(false);
                     self.m0_select.set_sensitive(false);
@@ -418,13 +465,9 @@ impl PlainCommandRepr for CommandRepr {
             ((self.addr() >> 4) & 0b1111) as u8,
             (self.addr() & 0b1111) as u8,
             self.jump() as u8,
-            // TODO: highest bit of these two should be set
-            // via separate widget. This is currently ignored
             self.load() as u8,
             self.args() as u8,
             self.func() as u8,
-            //self.load() as u8,
-            //self.pointer_size() as u8,
             self.a_arg() as u8,
             self.b_arg() as u8,
             self.d_arg() as u8,
