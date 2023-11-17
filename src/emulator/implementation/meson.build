@@ -18,7 +18,7 @@ engine = custom_target(
 	install_dir: 'subdir',
 )
 
-pkgdatadir = get_option('prefix') / get_option('datadir') / meson.project_name()
+pkgdatadir = get_option('prefix') / 'subdir'
 
 conf = configuration_data()
 conf.set_quoted('PKGDATADIR', pkgdatadir)
@@ -27,6 +27,13 @@ configure_file(
     input: 'config.h.in',
     output: 'config.h',
     configuration: conf
+)
+# Copy the config.h output to the source directory.
+run_command(
+  'cp',
+  meson.project_build_root() / 'src' / 'emulator' / 'implementation' / 'config.h',
+  meson.project_source_root() / 'src' / 'emulator' / 'implementation' / 'config.h',
+  check: true
 )
 
 engine_files = files(

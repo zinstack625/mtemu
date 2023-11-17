@@ -44,7 +44,7 @@ endif
 
 cargo_build = custom_target(
   'cargo-build',
-  build_by_default: true,
+  build_by_default: false,
   build_always_stale: true,
   output: meson.project_name(),
   console: true,
@@ -55,4 +55,12 @@ cargo_build = custom_target(
     cargo_bin, 'build',
     cargo_opt,
   ],
+)
+
+pre_install = custom_target(
+  'final_binary',
+  depends: cargo_build,
+  build_by_default: true,
+  output: 'fakery',
+  command: ['cp', meson.project_build_root() / 'src' / rust_target / meson.project_name(), 'src' / meson.project_name()]
 )

@@ -4,6 +4,7 @@
     "runtime-version" : "45",
     "sdk" : "org.gnome.Sdk",
     "sdk-extensions" : [
+    	"org.freedesktop.Sdk.Extension.mono6",
         "org.freedesktop.Sdk.Extension.rust-stable"
     ],
     "command" : "mtemu",
@@ -15,13 +16,14 @@
         "--socket=wayland"
     ],
     "build-options" : {
-        "append-path" : "/usr/lib/sdk/rust-stable/bin",
+        "append-path" : "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/mono6/bin",
         "build-args" : [
             "--share=network"
         ],
         "env" : {
             "RUST_BACKTRACE" : "1",
-            "RUST_LOG" : "mtemu=debug"
+            "RUST_LOG" : "mtemu=debug",
+            "PKG_CONFIG_PATH": "/usr/lib/sdk/mono6/lib/pkgconfig"
         }
     },
     "cleanup" : [
@@ -38,12 +40,12 @@
     "modules" : [
         {
             "name" : "mtemu",
-            "builddir" : true,
             "buildsystem" : "meson",
+            "builddir": true,
             "sources" : [
                 {
                     "type" : "git",
-                    "url" : "file:///home/anton/Code/Studies"
+                    "url" : "https://github.com/zinstack625/mtemu"
                 }
             ]
         }
