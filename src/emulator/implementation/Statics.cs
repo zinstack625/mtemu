@@ -353,10 +353,10 @@ namespace mtemu
             },
             {
                 WordType.DEVICE, new string[][] {
-                    new string[] {"","0000","PORT0 (IN)"},
-                    new string[] {"","0001","PORT1 (IN)"},
-                    new string[] {"","0010","PORT2 (OUT)"},
-                    new string[] {"","0011","PORT3 (OUT)"},
+                    new string[] {"","0000","PORT0 (UART)"},
+                    new string[] {"","0001","PORT1 (SPI)"},
+                    new string[] {"","0010","PORT2 (I2C)"},
+                    new string[] {"","0011","PORT3 (GPIO)"},
                 }
             },
         };

@@ -639,10 +639,10 @@ namespace mtemu
             mp_ = (Current_().GetRawValue(WordType.A) << 4) + Current_().GetRawValue(WordType.B);
         }
 
-        private PortExtender.InPort GetInPort(DataPointerType type)
+        private PortExtender.Port GetPort(DataPointerType type)
         {
             if (devPtr_ == -1) {
-                return PortExtender.InPort.PORT_UNKNOWN;
+                return PortExtender.Port.PORT_UNKNOWN;
             }
 
             var val = devPtr_ << 2;
@@ -661,38 +661,10 @@ namespace mtemu
 
             var val_b = Convert.ToByte(val);
 
-            if (Enum.IsDefined(typeof(PortExtender.InPort), val_b))
-                return (PortExtender.InPort) val_b;
+            if (Enum.IsDefined(typeof(PortExtender.Port), val_b))
+                return (PortExtender.Port) val_b;
 
-            return PortExtender.InPort.PORT_UNKNOWN;
-        }
-
-        private PortExtender.OutPort GetOutPort(DataPointerType type)
-        {
-            if (devPtr_ == -1) {
-                return PortExtender.OutPort.PORT_UNKNOWN;
-            }
-
-            var val = devPtr_ << 2;
-
-            switch (type) {
-            case DataPointerType.LOW_4_BIT:
-                val |= 1;
-                break;
-            case DataPointerType.HIGH_4_BIT:
-                val |= 2;
-                break;
-            case DataPointerType.FULL_8_BIT:
-                val |= 3;
-                break;
-            }
-
-            var val_b = Convert.ToByte(val);
-
-            if (Enum.IsDefined(typeof(PortExtender.OutPort), val_b))
-                return (PortExtender.OutPort) val_b;
-
-            return PortExtender.OutPort.PORT_UNKNOWN;
+            return PortExtender.Port.PORT_UNKNOWN;
         }
 
         private void SetDevicePtr_()
@@ -707,7 +679,6 @@ namespace mtemu
             DataPointerType pointerType = Current_().GetPointerType();
             int a = Current_().GetRawValue(WordType.A);
             int b = Current_().GetRawValue(WordType.B);
-
             switch (func) {
             case FuncType.STORE_MEMORY:
                 switch (pointerType) {
@@ -743,60 +714,70 @@ namespace mtemu
                 }
                 break;
             case FuncType.STORE_DEVICE:
-                PortExtender.OutPort outPort = GetOutPort(pointerType);
-                if (outPort != PortExtender.OutPort.PORT_UNKNOWN) {
-                    byte tmp_w = 0;
+                    {
+                        PortExtender.Port Port = GetPort(pointerType);
+                        if (Port != PortExtender.Port.PORT_UNKNOWN)
+                        {
+                            byte tmp_w = 0;
 
-                    switch (pointerType) {
-                    case DataPointerType.LOW_4_BIT:
-                        tmp_w = Helpers.MakeLowNibble(regCommon_[b]);
-                        break;
-                    case DataPointerType.HIGH_4_BIT:
-                        tmp_w = Helpers.MakeHighNibble(regCommon_[a]);
-                        break;
-                    case DataPointerType.FULL_8_BIT:
-                        tmp_w = Helpers.MakeByte(regCommon_[a], regCommon_[b]);
+                            switch (pointerType)
+                            {
+                                case DataPointerType.LOW_4_BIT:
+                                    tmp_w = Helpers.MakeLowNibble(regCommon_[b]);
+                                    break;
+                                case DataPointerType.HIGH_4_BIT:
+                                    tmp_w = Helpers.MakeHighNibble(regCommon_[a]);
+                                    break;
+                                case DataPointerType.FULL_8_BIT:
+                                    tmp_w = Helpers.MakeByte(regCommon_[a], regCommon_[b]);
+                                    break;
+                            }
+
+                            portExtender_.WritePort(Port, pointerType, tmp_w);
+                        }
+                        else
+                        {
+                            System.Windows.Forms.MessageBox.Show(
+                                "Вы - болван, у Вас проблема с кодом (генетическим), проверьтесь у врача!\nТакие упорствующие индивиды не должны размножаться!",
+                                "Невозможно записать в это устройство",
+                                System.Windows.Forms.MessageBoxButtons.OK,
+                                System.Windows.Forms.MessageBoxIcon.Error
+                            );
+                        }
                         break;
                     }
-
-                    portExtender_.WritePort(outPort, pointerType, tmp_w);
-                }
-                else {
-                    System.Windows.Forms.MessageBox.Show(
-                        "Вы - болван, у Вас проблема с кодом (генетическим), проверьтесь у врача!\nТакие упорствующие индивиды не должны размножаться!",
-                        "Невозможно записать в это устройство",
-                        System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error
-                    );
-                }
-                break;
             case FuncType.LOAD_DEVICE:
-                PortExtender.InPort inPort = GetInPort(pointerType);
-                if (inPort != PortExtender.InPort.PORT_UNKNOWN) {
-                    byte tmp_r;
-                    tmp_r = portExtender_.ReadPort(inPort, pointerType);
-                    switch (pointerType) {
-                    case DataPointerType.LOW_4_BIT:
-                        regCommon_[b] = Helpers.LowNibble(tmp_r);
-                        break;
-                    case DataPointerType.HIGH_4_BIT:
-                        regCommon_[a] = Helpers.HighNibble(tmp_r);
-                        break;
-                    case DataPointerType.FULL_8_BIT:
-                        regCommon_[a] = Helpers.HighNibble(tmp_r);
-                        regCommon_[b] = Helpers.LowNibble(tmp_r);
+                    {
+                        PortExtender.Port Port = GetPort(pointerType);
+                        if (Port != PortExtender.Port.PORT_UNKNOWN)
+                        {
+                            byte tmp_r;
+                            tmp_r = portExtender_.ReadPort(Port, pointerType);
+                            switch (pointerType)
+                            {
+                                case DataPointerType.LOW_4_BIT:
+                                    regCommon_[b] = Helpers.LowNibble(tmp_r);
+                                    break;
+                                case DataPointerType.HIGH_4_BIT:
+                                    regCommon_[a] = Helpers.HighNibble(tmp_r);
+                                    break;
+                                case DataPointerType.FULL_8_BIT:
+                                    regCommon_[a] = Helpers.HighNibble(tmp_r);
+                                    regCommon_[b] = Helpers.LowNibble(tmp_r);
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            System.Windows.Forms.MessageBox.Show(
+                                "Вы - болван, у Вас проблема с кодом (генетическим), проверьтесь у врача!\nТакие упорствующие индивиды не должны размножаться!",
+                                "Невозможно прочитать из этого устройства",
+                                System.Windows.Forms.MessageBoxButtons.OK,
+                                System.Windows.Forms.MessageBoxIcon.Error
+                            );
+                        }
                         break;
                     }
-                }
-                else {
-                    System.Windows.Forms.MessageBox.Show(
-                        "Вы - болван, у Вас проблема с кодом (генетическим), проверьтесь у врача!\nТакие упорствующие индивиды не должны размножаться!",
-                        "Невозможно прочитать из этого устройства",
-                        System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Error
-                    );
-                }
-                break;
             }
             if (func == FuncType.STORE_MEMORY || func == FuncType.LOAD_MEMORY) {
                 switch (inc_) {
