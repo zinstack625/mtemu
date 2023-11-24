@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -17,6 +17,7 @@ namespace mtemu
 
         private List<Command> commands_ = new List<Command>();
         private List<Call> calls_ = new List<Call>();
+        private Dictionary<int, Tuple<string, int>> mapCalls_ = new Dictionary<int, Tuple<string, int>>(); // code => {name, address}
 
         private int sp_;        // Stack pointer
         private int[] stack_ = new int[stackSize_];
@@ -93,9 +94,10 @@ namespace mtemu
             prevP_ = false;
         }
 
-        public Emulator()//PortExtender portExtender)
+        public Emulator(PortExtender portExtender)
         {
-            //portExtender_ = portExtender;
+            mapCalls_ = mapJumps_;
+            portExtender_ = portExtender;
             Reset();
         }
 
@@ -122,14 +124,18 @@ namespace mtemu
         private int GetOffset_(int last)
         {
             int offset = 0;
-            for (int i = 0; i < commands_.Count; ++i) {
-                if (i == last) {
+            for (int i = 0; i < commands_.Count; ++i)
+            {
+                if (i == last)
+                {
                     break;
                 }
-                if (commands_[i].isOffset) {
+                if (commands_[i].isOffset)
+                {
                     offset = commands_[i].GetNextAddr();
                 }
-                else {
+                else
+                {
                     ++offset;
                 }
             }
@@ -139,11 +145,14 @@ namespace mtemu
         private int UpdateOffsets_(int first = 0)
         {
             int offset = first == 0 ? -1 : commands_[first - 1].GetNumber();
-            for (int i = first; i < commands_.Count; ++i) {
-                if (i > 0 && commands_[i - 1].isOffset) {
+            for (int i = first; i < commands_.Count; ++i)
+            {
+                if (i > 0 && commands_[i - 1].isOffset)
+                {
                     offset = commands_[i - 1].GetNextAddr();
                 }
-                else {
+                else
+                {
                     ++offset;
                 }
                 commands_[i].SetNumber(offset);
@@ -158,11 +167,13 @@ namespace mtemu
 
         public bool AddCommand(int index, Command command)
         {
-            if (!command.Check()) {
+            if (!command.Check())
+            {
                 return false;
             }
             command.SetNumber(GetOffset_(index));
-            if (command.GetNumber() > programSize_) {
+            if (command.GetNumber() > programSize_)
+            {
                 return false;
             }
             commands_.Insert(index, command);
@@ -172,7 +183,8 @@ namespace mtemu
 
         public bool UpdateCommand(int index, Command command)
         {
-            if (!command.Check()) {
+            if (!command.Check())
+            {
                 return false;
             }
             commands_[index] = command;
@@ -193,7 +205,8 @@ namespace mtemu
 
         public void MoveCommandUp(int index)
         {
-            if (index <= 0) {
+            if (index <= 0)
+            {
                 return;
             }
             commands_.Insert(index - 1, commands_[index]);
@@ -203,7 +216,8 @@ namespace mtemu
 
         public void MoveCommandDown(int index)
         {
-            if (index == commands_.Count - 1) {
+            if (index == commands_.Count - 1)
+            {
                 return;
             }
             commands_.Insert(index + 2, commands_[index]);
@@ -219,8 +233,10 @@ namespace mtemu
         private int GetIndex_(int addr)
         {
             int curr = 0;
-            foreach (Command command in commands_) {
-                if (command.GetNumber() - addr == 0 && !command.isOffset) {
+            foreach (Command command in commands_)
+            {
+                if (command.GetNumber() - addr == 0 && !command.isOffset)
+                {
                     return curr;
                 }
                 ++curr;
@@ -231,7 +247,8 @@ namespace mtemu
         public Command ExecutedCommand()
         {
             int i = GetIndex_(prevPc_);
-            if (i == -1) {
+            if (i == -1)
+            {
                 return incorrectCommand_;
             }
             return commands_[i];
@@ -240,7 +257,8 @@ namespace mtemu
         private Command Prev_()
         {
             int i = GetIndex_(prevPc_);
-            if (i == -1) {
+            if (i == -1)
+            {
                 return incorrectCommand_;
             }
             return commands_[i];
@@ -249,7 +267,8 @@ namespace mtemu
         private Command Current_()
         {
             int i = GetIndex_(pc_);
-            if (i == -1) {
+            if (i == -1)
+            {
                 return incorrectCommand_;
             }
             return commands_[i];
@@ -260,121 +279,186 @@ namespace mtemu
             return (sp + stackSize_) % stackSize_;
         }
 
+        private int GetAddrByCode(int code)
+        {
+            if (mapCalls_.ContainsKey(code))
+            {
+                Tuple<string, int> nameAddr = mapCalls_[code];
+                return nameAddr.Item2;
+            }
+            return -1;
+        }
+
         private void Jump_()
         {
             prevPc_ = pc_;
 
-            switch (Current_().GetJumpType()) {
-            case JumpType.END:
-                callIndex_ += Current_().GetDiffAddr() + 1;
-                if (calls_.Count > 0 && callIndex_ < calls_.Count) {
-                    pc_ = calls_[callIndex_].GetAddress();
+            switch (Current_().GetJumpType())
+            {
+                case JumpType.END:
+                    Call call = calls_[callIndex_];
+                    if (call.GetAltCommandAddress())
+                    {
+                        switch (call.GetFlag())
+                        {
+                            case JumpType.JZ:
+                                if (prevZ_)
+                                {
+                                    callIndex_ = call.GetArg0();
+                                    break;
+                                }
+                                ++callIndex_;
+                                break;
+                            case JumpType.JC4:
+                                if (prevC4_)
+                                {
+                                    callIndex_ = call.GetArg0();
+                                    break;
+                                }
+                                ++callIndex_;
+                                break;
+                            case JumpType.JNZ:
+                                if (!prevZ_)
+                                {
+                                    callIndex_ = call.GetArg0();
+                                    break;
+                                }
+                                ++callIndex_;
+                                break;
+                            case JumpType.JSNC4:
+                                if (!prevC4_)
+                                {
+                                    callIndex_ = call.GetArg0();
+                                    break;
+                                }
+                                ++callIndex_;
+                                break;
+                            case JumpType.JMP:
+                                callIndex_ = call.GetArg0();
+                                break;
+                        }
+                    } 
+                    else
+                    {
+                        ++callIndex_;
+                    }
+
+                    if (calls_.Count > 0 && callIndex_ < calls_.Count)
+                    {
+                        pc_ = GetAddrByCode(call.GetCode());
+                        return;
+                    }
+                    end_ = true;
                     return;
-                }
-                end_ = true;
-                return;
-
-            case JumpType.JMP:
-                pc_ = Current_().GetNextAddr();
-                return;
-
-            case JumpType.JNXT:
-                ++pc_;
-                return;
-
-            case JumpType.JNZ:
-                if (!prevZ_) {
+                case JumpType.JMP:
                     pc_ = Current_().GetNextAddr();
+                    return;
+
+                case JumpType.JNXT:
+                    ++pc_;
+                    return;
+
+                case JumpType.JNZ:
+                    if (!prevZ_)
+                    {
+                        pc_ = Current_().GetNextAddr();
+                        break;
+                    }
+                    ++pc_;
                     break;
-                }
-                ++pc_;
-                break;
 
-            case JumpType.JZ:
-                if (prevZ_) {
-                    pc_ = Current_().GetNextAddr();
+                case JumpType.JZ:
+                    if (prevZ_)
+                    {
+                        pc_ = Current_().GetNextAddr();
+                        break;
+                    }
+                    ++pc_;
                     break;
-                }
-                ++pc_;
-                break;
 
-            case JumpType.JF3:
-                if (prevF3_) {
-                    pc_ = Current_().GetNextAddr();
+                case JumpType.JF3:
+                    if (prevF3_)
+                    {
+                        pc_ = Current_().GetNextAddr();
+                        break;
+                    }
+                    ++pc_;
                     break;
-                }
-                ++pc_;
-                break;
 
-            case JumpType.JOVR:
-                if (prevOvr_) {
-                    pc_ = Current_().GetNextAddr();
+                case JumpType.JOVR:
+                    if (prevOvr_)
+                    {
+                        pc_ = Current_().GetNextAddr();
+                        break;
+                    }
+                    ++pc_;
                     break;
-                }
-                ++pc_;
-                break;
 
-            case JumpType.JC4:
-                if (prevC4_) {
-                    pc_ = Current_().GetNextAddr();
+                case JumpType.JC4:
+                    if (prevC4_)
+                    {
+                        pc_ = Current_().GetNextAddr();
+                        break;
+                    }
+                    ++pc_;
                     break;
-                }
-                ++pc_;
-                break;
 
-            case JumpType.CALL:
-                stack_[sp_] = pc_ + 1;
-                sp_ = GetStackAddr_(sp_ + 1);
-                pc_ = Current_().GetNextAddr();
-                return;
-
-            case JumpType.RET:
-                sp_ = GetStackAddr_(sp_ - 1);
-                pc_ = stack_[sp_];
-                return;
-
-            case JumpType.JSP:
-                pc_ = stack_[GetStackAddr_(sp_ - 1)];
-                return;
-
-            case JumpType.PUSH:
-                stack_[sp_] = pc_ + 1;
-                sp_ = GetStackAddr_(sp_ + 1);
-                ++pc_;
-                return;
-
-            case JumpType.POP:
-                sp_ = GetStackAddr_(sp_ - 1);
-                ++pc_;
-                return;
-
-            case JumpType.CLNZ:
-                if (!prevZ_) {
+                case JumpType.CALL:
                     stack_[sp_] = pc_ + 1;
                     sp_ = GetStackAddr_(sp_ + 1);
                     pc_ = Current_().GetNextAddr();
-                    break;
-                }
-                ++pc_;
-                break;
+                    return;
 
-            case JumpType.JSNZ:
-                if (!prevZ_) {
-                    pc_ = stack_[GetStackAddr_(sp_ - 1)];
-                    break;
-                }
-                sp_ = GetStackAddr_(sp_ - 1);
-                ++pc_;
-                break;
+                case JumpType.RET:
+                    sp_ = GetStackAddr_(sp_ - 1);
+                    pc_ = stack_[sp_];
+                    return;
 
-            case JumpType.JSNC4:
-                if (!prevC4_) {
+                case JumpType.JSP:
                     pc_ = stack_[GetStackAddr_(sp_ - 1)];
+                    return;
+
+                case JumpType.PUSH:
+                    stack_[sp_] = pc_ + 1;
+                    sp_ = GetStackAddr_(sp_ + 1);
+                    ++pc_;
+                    return;
+
+                case JumpType.POP:
+                    sp_ = GetStackAddr_(sp_ - 1);
+                    ++pc_;
+                    return;
+
+                case JumpType.CLNZ:
+                    if (!prevZ_)
+                    {
+                        stack_[sp_] = pc_ + 1;
+                        sp_ = GetStackAddr_(sp_ + 1);
+                        pc_ = Current_().GetNextAddr();
+                        break;
+                    }
+                    ++pc_;
                     break;
-                }
-                sp_ = GetStackAddr_(sp_ - 1);
-                ++pc_;
-                break;
+
+                case JumpType.JSNZ:
+                    if (!prevZ_)
+                    {
+                        pc_ = stack_[GetStackAddr_(sp_ - 1)];
+                        break;
+                    }
+                    sp_ = GetStackAddr_(sp_ - 1);
+                    ++pc_;
+                    break;
+
+                case JumpType.JSNC4:
+                    if (!prevC4_)
+                    {
+                        pc_ = stack_[GetStackAddr_(sp_ - 1)];
+                        break;
+                    }
+                    sp_ = GetStackAddr_(sp_ - 1);
+                    ++pc_;
+                    break;
             }
 
             RestoreFlags();
@@ -382,21 +466,22 @@ namespace mtemu
 
         private void CountFlags_(FuncType alu)
         {
-            bool c0 = (int) alu >= 8;
+            bool c0 = (int)alu >= 8;
 
             int r = r_;
             int s = s_;
-            switch (alu) {
-            case FuncType.S_MINUS_R_MINUS_1:
-            case FuncType.S_MINUS_R:
-            case FuncType.NO_R_AND_S:
-            case FuncType.R_XOR_S:
-                r = Helpers.Mask(~r);
-                break;
-            case FuncType.R_MINUS_S_MINUS_1:
-            case FuncType.R_MINUS_S:
-                s = Helpers.Mask(~s);
-                break;
+            switch (alu)
+            {
+                case FuncType.S_MINUS_R_MINUS_1:
+                case FuncType.S_MINUS_R:
+                case FuncType.NO_R_AND_S:
+                case FuncType.R_XOR_S:
+                    r = Helpers.Mask(~r);
+                    break;
+                case FuncType.R_MINUS_S_MINUS_1:
+                case FuncType.R_MINUS_S:
+                    s = Helpers.Mask(~s);
+                    break;
             }
 
             int p = r | s;
@@ -404,64 +489,65 @@ namespace mtemu
             bool p30 = p == 15;
             bool g30 = g > 0;
 
-            switch (alu) {
-            case FuncType.R_PLUS_S:
-            case FuncType.R_PLUS_S_PLUS_1:
-            case FuncType.S_MINUS_R_MINUS_1:
-            case FuncType.S_MINUS_R:
-            case FuncType.R_MINUS_S_MINUS_1:
-            case FuncType.R_MINUS_S:
-                p_ = !p30;
+            switch (alu)
+            {
+                case FuncType.R_PLUS_S:
+                case FuncType.R_PLUS_S_PLUS_1:
+                case FuncType.S_MINUS_R_MINUS_1:
+                case FuncType.S_MINUS_R:
+                case FuncType.R_MINUS_S_MINUS_1:
+                case FuncType.R_MINUS_S:
+                    p_ = !p30;
 
-                bool g1 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && Helpers.IsBitSet(g, 0));
-                bool g2 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && g1);
-                bool g3 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && g2);
-                g_ = !g3;
+                    bool g1 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && Helpers.IsBitSet(g, 0));
+                    bool g2 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && g1);
+                    bool g3 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && g2);
+                    g_ = !g3;
 
-                bool c1 = Helpers.IsBitSet(g, 0) || (Helpers.IsBitSet(p, 0) && c0);
-                bool c2 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && c1);
-                bool c3 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && c2);
-                bool c4 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && c3);
-                c4_ = c4;
-                ovr_ = c3 != c4;
+                    bool c1 = Helpers.IsBitSet(g, 0) || (Helpers.IsBitSet(p, 0) && c0);
+                    bool c2 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && c1);
+                    bool c3 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && c2);
+                    bool c4 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && c3);
+                    c4_ = c4;
+                    ovr_ = c3 != c4;
 
-                break;
-            case FuncType.R_OR_S:
-                p_ = false;
-                g_ = p30;
-                c4_ = !p30 || c0;
-                ovr_ = c4_;
-                break;
-            case FuncType.R_AND_S:
-            case FuncType.NO_R_AND_S:
-                p_ = false;
-                g_ = !g30;
-                c4_ = g30 || c0;
-                ovr_ = c4_;
-                break;
-            case FuncType.R_XOR_S:
-            case FuncType.R_EQ_S:
-                p_ = g30;
+                    break;
+                case FuncType.R_OR_S:
+                    p_ = false;
+                    g_ = p30;
+                    c4_ = !p30 || c0;
+                    ovr_ = c4_;
+                    break;
+                case FuncType.R_AND_S:
+                case FuncType.NO_R_AND_S:
+                    p_ = false;
+                    g_ = !g30;
+                    c4_ = g30 || c0;
+                    ovr_ = c4_;
+                    break;
+                case FuncType.R_XOR_S:
+                case FuncType.R_EQ_S:
+                    p_ = g30;
 
-                bool g_1 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && Helpers.IsBitSet(p, 0));
-                bool g_2 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && g_1);
-                bool g_3 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && g_2);
-                g_ = g_3;
+                    bool g_1 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && Helpers.IsBitSet(p, 0));
+                    bool g_2 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && g_1);
+                    bool g_3 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && g_2);
+                    g_ = g_3;
 
-                bool c4_1 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && Helpers.IsBitSet(p, 0) && (Helpers.IsBitSet(g, 0) || !c0));
-                bool c4_2 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && c4_1);
-                bool c4_3 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && c4_2);
-                c4_ = !c4_3;
+                    bool c4_1 = Helpers.IsBitSet(g, 1) || (Helpers.IsBitSet(p, 1) && Helpers.IsBitSet(p, 0) && (Helpers.IsBitSet(g, 0) || !c0));
+                    bool c4_2 = Helpers.IsBitSet(g, 2) || (Helpers.IsBitSet(p, 2) && c4_1);
+                    bool c4_3 = Helpers.IsBitSet(g, 3) || (Helpers.IsBitSet(p, 3) && c4_2);
+                    c4_ = !c4_3;
 
-                p = Helpers.Mask(~p);
-                g = Helpers.Mask(~g);
-                bool ovr_0 = Helpers.IsBitSet(p, 0) || (Helpers.IsBitSet(g, 0) && c0);
-                bool ovr_1 = Helpers.IsBitSet(p, 1) || (Helpers.IsBitSet(g, 1) && ovr_0);
-                bool ovr_2 = Helpers.IsBitSet(p, 2) || (Helpers.IsBitSet(g, 2) && ovr_1);
-                bool ovr_3 = Helpers.IsBitSet(p, 3) || (Helpers.IsBitSet(g, 3) && ovr_2);
-                ovr_ = ovr_2 != ovr_3;
+                    p = Helpers.Mask(~p);
+                    g = Helpers.Mask(~g);
+                    bool ovr_0 = Helpers.IsBitSet(p, 0) || (Helpers.IsBitSet(g, 0) && c0);
+                    bool ovr_1 = Helpers.IsBitSet(p, 1) || (Helpers.IsBitSet(g, 1) && ovr_0);
+                    bool ovr_2 = Helpers.IsBitSet(p, 2) || (Helpers.IsBitSet(g, 2) && ovr_1);
+                    bool ovr_3 = Helpers.IsBitSet(p, 3) || (Helpers.IsBitSet(g, 3) && ovr_2);
+                    ovr_ = ovr_2 != ovr_3;
 
-                break;
+                    break;
             }
 
             f3_ = Helpers.IsBitSet(f_, Command.WORD_SIZE - 1);
@@ -483,75 +569,77 @@ namespace mtemu
             prevRegA_ = regCommon_[a];
             prevRegB_ = regCommon_[b];
 
-            switch (from) {
-            case FromType.A_AND_PQ:
-                r_ = regCommon_[a];
-                s_ = regQ_;
-                break;
-            case FromType.A_AND_B:
-                r_ = regCommon_[a];
-                s_ = regCommon_[b];
-                break;
-            case FromType.ZERO_AND_Q:
-                r_ = 0;
-                s_ = regQ_;
-                break;
-            case FromType.ZERO_AND_B:
-                r_ = 0;
-                s_ = regCommon_[b];
-                break;
-            case FromType.ZERO_AND_A:
-                r_ = 0;
-                s_ = regCommon_[a];
-                break;
-            case FromType.D_AND_A:
-                r_ = d;
-                s_ = regCommon_[a];
-                break;
-            case FromType.D_AND_Q:
-                r_ = d;
-                s_ = regQ_;
-                break;
-            case FromType.D_AND_ZERO:
-                r_ = d;
-                s_ = 0;
-                break;
+            switch (from)
+            {
+                case FromType.A_AND_PQ:
+                    r_ = regCommon_[a];
+                    s_ = regQ_;
+                    break;
+                case FromType.A_AND_B:
+                    r_ = regCommon_[a];
+                    s_ = regCommon_[b];
+                    break;
+                case FromType.ZERO_AND_Q:
+                    r_ = 0;
+                    s_ = regQ_;
+                    break;
+                case FromType.ZERO_AND_B:
+                    r_ = 0;
+                    s_ = regCommon_[b];
+                    break;
+                case FromType.ZERO_AND_A:
+                    r_ = 0;
+                    s_ = regCommon_[a];
+                    break;
+                case FromType.D_AND_A:
+                    r_ = d;
+                    s_ = regCommon_[a];
+                    break;
+                case FromType.D_AND_Q:
+                    r_ = d;
+                    s_ = regQ_;
+                    break;
+                case FromType.D_AND_ZERO:
+                    r_ = d;
+                    s_ = 0;
+                    break;
             }
 
-            switch (alu) {
-            case FuncType.R_PLUS_S:
-                f_ = r_ + s_;
-                break;
-            case FuncType.R_PLUS_S_PLUS_1:
-                f_ = r_ + s_ + 1;
-                break;
-            case FuncType.S_MINUS_R_MINUS_1:
-                f_ = s_ + Helpers.Mask(~r_);
-                break;
-            case FuncType.S_MINUS_R:
-                f_ = s_ + Helpers.Mask(~r_) + 1;
-                break;
-            case FuncType.R_MINUS_S_MINUS_1:
-                f_ = r_ + Helpers.Mask(~s_);
-                break;
-            case FuncType.R_MINUS_S:
-                f_ = r_ + Helpers.Mask(~s_) + 1;
-                break;
-            case FuncType.R_OR_S:
-                f_ = r_ | s_;
-                break;
-            case FuncType.R_AND_S:
-                f_ = r_ & s_;
-                break;
-            case FuncType.NO_R_AND_S:
-                f_ = Helpers.Mask(~r_) & s_;
-                break;
-            case FuncType.R_XOR_S:
-                f_ = r_ ^ s_;
-                break;
-            case FuncType.R_EQ_S:
-                f_ = Helpers.Mask(~(r_ ^ s_));
-                break;
+            switch (alu)
+            {
+                case FuncType.R_PLUS_S:
+                    f_ = r_ + s_;
+                    break;
+                case FuncType.R_PLUS_S_PLUS_1:
+                    f_ = r_ + s_ + 1;
+                    break;
+                case FuncType.S_MINUS_R_MINUS_1:
+                    f_ = s_ + Helpers.Mask(~r_);
+                    break;
+                case FuncType.S_MINUS_R:
+                    f_ = s_ + Helpers.Mask(~r_) + 1;
+                    break;
+                case FuncType.R_MINUS_S_MINUS_1:
+                    f_ = r_ + Helpers.Mask(~s_);
+                    break;
+                case FuncType.R_MINUS_S:
+                    f_ = r_ + Helpers.Mask(~s_) + 1;
+                    break;
+                case FuncType.R_OR_S:
+                    f_ = r_ | s_;
+                    break;
+                case FuncType.R_AND_S:
+                    f_ = r_ & s_;
+                    break;
+                case FuncType.NO_R_AND_S:
+                    f_ = Helpers.Mask(~r_) & s_;
+                    break;
+                case FuncType.R_XOR_S:
+                    f_ = r_ ^ s_;
+                    break;
+                case FuncType.R_EQ_S:
+                    f_ = Helpers.Mask(~(r_ ^ s_));
+                    break;
             }
             f_ = Helpers.Mask(f_);
 
@@ -562,73 +650,80 @@ namespace mtemu
             int fLow = Helpers.GetBit(f_, 0);
             int fHigh = Helpers.GetBit(f_, Command.WORD_SIZE - 1);
 
-            switch (to) {
-            case ToType.F_IN_Q:
-                regQ_ = f_;
-                break;
-            case ToType.NO_LOAD:
-                break;
-            case ToType.F_IN_B_AND_A_IN_Y:
-            case ToType.F_IN_B:
-                regCommon_[b] = f_;
-                break;
-            case ToType.SR_F_IN_B_AND_SR_Q_IN_Q:
-                regQ_ = regQ_ >> 1;
-                regCommon_[b] = f_ >> 1;
-                switch (shift) {
-                case ShiftType.CYCLE:
-                    regCommon_[b] |= fLow << 3;
-                    regQ_ |= qLow << 3;
+            switch (to)
+            {
+                case ToType.F_IN_Q:
+                    regQ_ = f_;
                     break;
-                case ShiftType.CYCLE_DOUBLE:
-                    regCommon_[b] |= qLow << 3;
-                    regQ_ |= fLow << 3;
+                case ToType.NO_LOAD:
                     break;
-                case ShiftType.ARITHMETIC_DOUBLE:
-                    regCommon_[b] |= fHigh << 3;
-                    regQ_ |= fLow << 3;
+                case ToType.F_IN_B_AND_A_IN_Y:
+                case ToType.F_IN_B:
+                    regCommon_[b] = f_;
                     break;
-                }
-                break;
-            case ToType.SR_F_IN_B:
-                regCommon_[b] = f_ >> 1;
-                switch (shift) {
-                case ShiftType.CYCLE:
-                    regCommon_[b] |= fLow << 3;
+                case ToType.SR_F_IN_B_AND_SR_Q_IN_Q:
+                    regQ_ = regQ_ >> 1;
+                    regCommon_[b] = f_ >> 1;
+                    switch (shift)
+                    {
+                        case ShiftType.CYCLE:
+                            regCommon_[b] |= fLow << 3;
+                            regQ_ |= qLow << 3;
+                            break;
+                        case ShiftType.CYCLE_DOUBLE:
+                            regCommon_[b] |= qLow << 3;
+                            regQ_ |= fLow << 3;
+                            break;
+                        case ShiftType.ARITHMETIC_DOUBLE:
+                            regCommon_[b] |= fHigh << 3;
+                            regQ_ |= fLow << 3;
+                            break;
+                    }
                     break;
-                }
-                break;
-            case ToType.SL_F_IN_B_AND_SL_Q_IN_Q:
-                regQ_ = Helpers.Mask(regQ_ << 1);
-                regCommon_[b] = Helpers.Mask(f_ << 1);
-                switch (shift) {
-                case ShiftType.CYCLE:
-                    regCommon_[b] |= fHigh;
-                    regQ_ |= qHigh;
+                case ToType.SR_F_IN_B:
+                    regCommon_[b] = f_ >> 1;
+                    switch (shift)
+                    {
+                        case ShiftType.CYCLE:
+                            regCommon_[b] |= fLow << 3;
+                            break;
+                    }
                     break;
-                case ShiftType.CYCLE_DOUBLE:
-                    regCommon_[b] |= qHigh;
-                    regQ_ |= fHigh;
+                case ToType.SL_F_IN_B_AND_SL_Q_IN_Q:
+                    regQ_ = Helpers.Mask(regQ_ << 1);
+                    regCommon_[b] = Helpers.Mask(f_ << 1);
+                    switch (shift)
+                    {
+                        case ShiftType.CYCLE:
+                            regCommon_[b] |= fHigh;
+                            regQ_ |= qHigh;
+                            break;
+                        case ShiftType.CYCLE_DOUBLE:
+                            regCommon_[b] |= qHigh;
+                            regQ_ |= fHigh;
+                            break;
+                        case ShiftType.ARITHMETIC_DOUBLE:
+                            regCommon_[b] |= qHigh;
+                            break;
+                    }
                     break;
-                case ShiftType.ARITHMETIC_DOUBLE:
-                    regCommon_[b] |= qHigh;
+                case ToType.SL_F_IN_B:
+                    regCommon_[b] = Helpers.Mask(f_ << 1);
+                    switch (shift)
+                    {
+                        case ShiftType.CYCLE:
+                            regCommon_[b] |= fHigh;
+                            break;
+                    }
                     break;
-                }
-                break;
-            case ToType.SL_F_IN_B:
-                regCommon_[b] = Helpers.Mask(f_ << 1);
-                switch (shift) {
-                case ShiftType.CYCLE:
-                    regCommon_[b] |= fHigh;
-                    break;
-                }
-                break;
             }
 
-            if (to == ToType.F_IN_B_AND_A_IN_Y) {
+            if (to == ToType.F_IN_B_AND_A_IN_Y)
+            {
                 y_ = regCommon_[a];
             }
-            else {
+            else
+            {
                 y_ = f_;
             }
         }
@@ -647,16 +742,17 @@ namespace mtemu
 
             var val = devPtr_ << 2;
 
-            switch (type) {
-            case DataPointerType.LOW_4_BIT:
-                val |= 1;
-                break;
-            case DataPointerType.HIGH_4_BIT:
-                val |= 2;
-                break;
-            case DataPointerType.FULL_8_BIT:
-                val |= 3;
-                break;
+            switch (type)
+            {
+                case DataPointerType.LOW_4_BIT:
+                    val |= 1;
+                    break;
+                case DataPointerType.HIGH_4_BIT:
+                    val |= 2;
+                    break;
+                case DataPointerType.FULL_8_BIT:
+                    val |= 3;
+                    break;
             }
 
             var val_b = Convert.ToByte(val);
@@ -779,63 +875,73 @@ namespace mtemu
                         break;
                     }
             }
-            if (func == FuncType.STORE_MEMORY || func == FuncType.LOAD_MEMORY) {
-                switch (inc_) {
-                case IncType.PLUS:
-                    ++mp_;
-                    mp_ %= memSize_;
-                    break;
-                case IncType.MINUS:
-                    --mp_;
-                    mp_ %= memSize_;
-                    break;
+            if (func == FuncType.STORE_MEMORY || func == FuncType.LOAD_MEMORY)
+            {
+                switch (inc_)
+                {
+                    case IncType.PLUS:
+                        ++mp_;
+                        mp_ %= memSize_;
+                        break;
+                    case IncType.MINUS:
+                        --mp_;
+                        mp_ %= memSize_;
+                        break;
                 }
             }
         }
 
         public ResultCode ExecOne()
         {
-            if (commands_.Count() == 0) {
+            if (commands_.Count() == 0)
+            {
                 return ResultCode.NoCommands;
             }
 
-            if (end_) {
+            if (end_)
+            {
                 return ResultCode.End;
             }
 
-            if (pc_ == -1) {
-                if (calls_.Count > 0) {
-                    pc_ = calls_[0].GetAddress();
+            if (pc_ == -1)
+            {
+                if (calls_.Count > 0)
+                {
+                    Call call = calls_[0];
+                    pc_ = GetAddrByCode(call.GetCode());
                     callIndex_ = 0;
                 }
-                else {
+                else
+                {
                     pc_ = 0;
                 }
                 return ResultCode.Ok;
             }
 
-            if (!Current_().Check()) {
+            if (!Current_().Check())
+            {
                 return ResultCode.IncorrectCommand;
             }
 
             // Save flags to restore then after command exec
             BackupFlags_();
 
-            switch (Current_().GetCommandView()) {
-            case ViewType.MT_COMMAND:
-                ExecMtCommand_();
-                break;
-            case ViewType.MEMORY_POINTER:
-                SetMemPtr_();
-                break;
-            case ViewType.DEVICE_POINTER:
-                SetDevicePtr_();
-                break;
-            case ViewType.LOAD_HIGH_4BIT:
-            case ViewType.LOAD_LOW_4BIT:
-            case ViewType.LOAD_8BIT:
-                LoadData_();
-                break;
+            switch (Current_().GetCommandView())
+            {
+                case ViewType.MT_COMMAND:
+                    ExecMtCommand_();
+                    break;
+                case ViewType.MEMORY_POINTER:
+                    SetMemPtr_();
+                    break;
+                case ViewType.DEVICE_POINTER:
+                    SetDevicePtr_();
+                    break;
+                case ViewType.LOAD_HIGH_4BIT:
+                case ViewType.LOAD_LOW_4BIT:
+                case ViewType.LOAD_8BIT:
+                    LoadData_();
+                    break;
             }
 
             Jump_();
@@ -847,12 +953,15 @@ namespace mtemu
         public ResultCode ExecOneCall()
         {
             int oldIndex = callIndex_;
-            for (int i = 0; i < maxAutoCount_; ++i) {
+            for (int i = 0; i < maxAutoCount_; ++i)
+            {
                 ResultCode rc = ExecOne();
-                if (rc != ResultCode.Ok) {
+                if (rc != ResultCode.Ok)
+                {
                     return rc;
                 }
-                if (Prev_().GetJumpType() == JumpType.END || callIndex_ != oldIndex || prevPc_ == pc_) {
+                if (Prev_().GetJumpType() == JumpType.END || callIndex_ != oldIndex || prevPc_ == pc_)
+                {
                     return ResultCode.Ok;
                 }
             }
@@ -861,12 +970,15 @@ namespace mtemu
 
         public ResultCode ExecAll()
         {
-            for (int i = 0; i < maxAutoCount_; ++i) {
+            for (int i = 0; i < maxAutoCount_; ++i)
+            {
                 ResultCode rc = ExecOne();
-                if (rc != ResultCode.Ok) {
+                if (rc != ResultCode.Ok)
+                {
                     return rc;
                 }
-                if (callIndex_ >= calls_.Count || prevPc_ == pc_) {
+                if (callIndex_ >= calls_.Count || prevPc_ == pc_)
+                {
                     return ResultCode.Ok;
                 }
             }
@@ -885,7 +997,8 @@ namespace mtemu
 
         public int GetCallIndex()
         {
-            if (callIndex_ >= calls_.Count) {
+            if (callIndex_ >= calls_.Count)
+            {
                 return -1;
             }
             return callIndex_;
@@ -1033,7 +1146,8 @@ namespace mtemu
 
         public void MoveCallUp(int index)
         {
-            if (index <= 0) {
+            if (index <= 0)
+            {
                 return;
             }
             calls_.Insert(index - 1, calls_[index]);
@@ -1042,7 +1156,8 @@ namespace mtemu
 
         public void MoveCallDown(int index)
         {
-            if (index >= calls_.Count - 1) {
+            if (index >= calls_.Count - 1)
+            {
                 return;
             }
             calls_.Insert(index + 2, calls_[index]);
@@ -1059,134 +1174,188 @@ namespace mtemu
             return calls_.Last();
         }
 
+        private bool CheckMapCall(int code, string name, int addr)
+        {
+            if (mapCalls_.ContainsKey(code)) return false;
+            if (code < 0x40 && code > 0xffff) return false;
+
+            if (name.Length > Call.NAME_MAX_SIZE) return false;
+            List<Tuple<string, int>> nameAddrList = new List<Tuple<string, int>>(mapCalls_.Values);
+            foreach (Tuple <string, int> item in nameAddrList)
+            {
+                if (name == item.Item1) return false;
+            }
+            
+            return true;
+        }
+
+        public bool AddMapCall(int code, string name, int addr)
+        {
+            if (!CheckMapCall(code, name, addr)) return false;
+            mapCalls_.Add(code, new Tuple<string, int>(name, addr));
+            return true;
+        }
+
+        public bool RemoveMapCall(int code)
+        {
+            if (mapCalls_.ContainsKey(code)) return false;
+            foreach (Call item in calls_)
+            {
+                if (item.GetCode() == code) return false;
+            }
+            mapCalls_.Remove(code);
+            return true;
+        }
+
+        public bool UpdateMapCall(int code, string name, int addr)
+        {
+            if (name.Length > Call.NAME_MAX_SIZE) return false;
+            if (!mapCalls_.ContainsKey(code)) return false;
+            Tuple<string, int> item = mapCalls_[code];
+            item = Tuple.Create(name, addr);
+            mapCalls_[code] = item;
+            return true;
+        }
+
+        public Dictionary<int, Tuple<string, int>> GetMapCall()
+        {
+            return mapCalls_;
+        }
+
         private void SaveAsMtemu_(FileStream fstream)
         {
-            int callsSize = CallsCount() * (sizeof(UInt16) + Call.COMMENT_MAX_SIZE);
+            int callsSize = CallsCount() * (Call.CallSize());
+            int mapCallsSize = mapCalls_.Count() * (2 * sizeof(UInt16) + Call.NAME_MAX_SIZE);
             int commandsSize = CommandsCount() * (commandSize_ + 1);
-            byte[] output = new byte[fileHeader_.Length + callsSize + commandsSize + 2 * sizeof(UInt16)];
+            byte[] output = new byte[fileHeader_.Length + mapCallsSize + callsSize + commandsSize + 3 * sizeof(UInt16)];
 
             int seek = 0;
-            for (; seek < fileHeader_.Length; ++seek) {
+            for (; seek < fileHeader_.Length; ++seek)
+            {
                 output[seek] = fileHeader_[seek];
             }
 
-            Call[] callsArr = calls_.ToArray();
-            output[seek++] = (byte) (calls_.Count >> 8);
-            output[seek++] = (byte) calls_.Count;
+            output[seek++] = (byte)(mapCalls_.Count >> 8);
+            output[seek++] = (byte)mapCalls_.Count;
 
-            for (int i = 0; i < callsArr.Length; ++i) {
-                output[seek++] = (byte) (callsArr[i].GetAddress() >> 8);
-                output[seek++] = (byte) callsArr[i].GetAddress();
-
-                byte[] comment = Encoding.UTF8.GetBytes(callsArr[i].GetComment());
-                for (int c = 0; c < Call.COMMENT_MAX_SIZE; ++c) {
-                    output[seek++] = (byte) (c < comment.Length ? comment[c] : 0);
+            foreach (KeyValuePair<int, Tuple<string, int>> pair in mapCalls_)
+            {
+                output[seek++] = (byte)(pair.Key >> 8);
+                output[seek++] = (byte)pair.Key;
+                byte[] name = Encoding.UTF8.GetBytes(pair.Value.Item1);
+                for (int c = 0; c < Call.NAME_MAX_SIZE; ++c)
+                {
+                    output[seek++] = (byte)(c < name.Length ? name[c] : 0);
                 }
+                output[seek++] = (byte)(pair.Value.Item2 >> 8);
+                output[seek++] = (byte)pair.Value.Item2;
+            }
+
+
+
+            Call[] callsArr = calls_.ToArray();
+            output[seek++] = (byte)(calls_.Count >> 8);
+            output[seek++] = (byte)calls_.Count;
+
+            for (int i = 0; i < callsArr.Length; ++i)
+            {
+                output[seek++] = (byte)(callsArr[i].GetCode() >> 8);
+                output[seek++] = (byte)callsArr[i].GetCode();
+                output[seek++] = (byte)(callsArr[i].GetArg0() >> 8);
+                output[seek++] = (byte)callsArr[i].GetArg0();
+                output[seek++] = (byte)(callsArr[i].GetArg1() >> 8);
+                output[seek++] = (byte)callsArr[i].GetArg1();
+                output[seek++] = (byte)(callsArr[i].GetAltCommandAddress() ? 1 : 0);
+                output[seek++] = (byte)callsArr[i].GetFlag();
             }
 
             Command[] commandsArr = commands_.ToArray();
-            output[seek++] = (byte) (commands_.Count >> 8);
-            output[seek++] = (byte) commands_.Count;
+            output[seek++] = (byte)(commands_.Count >> 8);
+            output[seek++] = (byte)commands_.Count;
 
-            for (int i = 0; i < commandsArr.Length; ++i) {
-                output[seek++] = (byte) (commandsArr[i].isOffset ? 1 : 0);
-                for (int j = 0; j < commandSize_; ++j) {
-                    output[seek++] = (byte) ((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
+            for (int i = 0; i < commandsArr.Length; ++i)
+            {
+                output[seek++] = (byte)(commandsArr[i].isOffset ? 1 : 0);
+                for (int j = 0; j < commandSize_; ++j)
+                {
+                    output[seek++] = (byte)((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
                 }
             }
 
-            fstream.Write(output, 0, output.Length);
-            fstream.SetLength(fstream.Position);
-        }
-
-        private void SaveAsBinary_(FileStream fstream)
-        {
-            int seek = 0;
-            byte[] output = new byte[binFileHeader_.Length + programSize_ * commandSize_];
-            for (; seek < binFileHeader_.Length; ++seek) {
-                output[seek] = binFileHeader_[seek];
-            }
-
-            UpdateOffsets_();
-            Command[] commandsArr = new Command[programSize_];
-            foreach (Command command in commands_) {
-                if (!command.isOffset) {
-                    commandsArr[command.GetNumber()] = command;
-                }
-            }
-
-            for (int i = 0; i < commandsArr.Length; ++i) {
-                if (commandsArr[i] == null) {
-                    commandsArr[i] = incorrectCommand_;
-                }
-                for (int j = 0; j < commandSize_; ++j, ++seek) {
-                    output[seek] = (byte) ((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
-                }
-            }
             fstream.Write(output, 0, output.Length);
             fstream.SetLength(fstream.Position);
         }
 
         public bool SaveFile(string filename)
         {
-            using (FileStream fstream = new FileStream(filename, FileMode.OpenOrCreate)) {
-                if (Path.GetExtension(filename) == ".bin") {
-                    SaveAsBinary_(fstream);
-                }
-                else {
-                    SaveAsMtemu_(fstream);
-                }
+            using (FileStream fstream = new FileStream(filename, FileMode.OpenOrCreate))
+            {
+                SaveAsMtemu_(fstream);
                 return true;
             }
         }
 
         public bool OpenRaw(byte[] input)
         {
-            if (fileHeader_.Length + 2 * sizeof(UInt16) > input.Length) {
-                return false;
-            }
-
             int seek = 0;
-            for (; seek < fileHeader_.Length; ++seek) {
-                if (input[seek] != fileHeader_[seek]) {
+            for (; seek < fileHeader_.Length; ++seek)
+            {
+                if (input[seek] != fileHeader_[seek])
+                {
                     return false;
                 }
             }
 
+            mapCalls_.Clear();
             calls_.Clear();
             commands_.Clear();
             Reset();
 
-            int callsCount = 0;
-            callsCount = (input[seek++] << 8) + input[seek++];
-            if (seek + callsCount * (sizeof(UInt16) + Call.COMMENT_MAX_SIZE) > input.Length) {
-                return false;
-            }
-
-            for (int i = 0; i < callsCount; ++i) {
-                int address = (input[seek++] << 8) + input[seek++];
-
-                byte[] comment = new byte[Call.COMMENT_MAX_SIZE];
-                for (int c = 0; c < Call.COMMENT_MAX_SIZE; ++c) {
-                    if (input[seek++] != 0) {
-                        comment[c] = input[seek - 1];
+            int mapCallCount = (input[seek++] << 8) + input[seek++];
+            for (int i = 0; i < mapCallCount; ++i)
+            {
+                int code = (input[seek++] << 8) + input[seek++];
+                byte[] byte_name = new byte[Call.NAME_MAX_SIZE];
+                for (int c = 0; c < Call.NAME_MAX_SIZE; ++c)
+                {
+                    if (input[seek++] != 0)
+                    {
+                        byte_name[c] = input[seek - 1];
                     }
                 }
+                string name = Encoding.UTF8.GetString(byte_name);
+                int addr = (input[seek++] << 8) + input[seek++];
+                if (!AddMapCall(code, name, addr)) return false;
+            }
 
-                calls_.Add(new Call(address, Encoding.UTF8.GetString(comment)));
+
+            int callsCount = (input[seek++] << 8) + input[seek++];
+
+            for (int i = 0; i < callsCount; ++i)
+            {
+                int code = (input[seek++] << 8) + input[seek++];
+                int arg0 = (input[seek++] << 8) + input[seek++];
+                int arg1 = (input[seek++] << 8) + input[seek++];
+                bool altCommandAddress = (input[seek++] == 1);
+                JumpType flag = (JumpType)Enum.Parse(typeof(JumpType), input[seek++].ToString());
+                Call call = new Call(code, arg0, arg1, altCommandAddress, flag);
+                AddCall(i, call);
             }
 
             int commandsCount = 0;
             commandsCount = (input[seek++] << 8) + input[seek++];
-            if (seek + commandsCount * (commandSize_ + 1) > input.Length) {
+            if (seek + commandsCount * (commandSize_ + 1) > input.Length)
+            {
                 return false;
             }
 
-            for (int i = 0; i < commandsCount; ++i) {
+            for (int i = 0; i < commandsCount; ++i)
+            {
                 bool isOffset = input[seek++] == 1;
 
                 int[] words = new int[commandSize_ * 2];
-                for (int j = 0; j < commandSize_; ++j, ++seek) {
+                for (int j = 0; j < commandSize_; ++j, ++seek)
+                {
                     words[2 * j] = input[seek] >> 4;
                     words[2 * j + 1] = input[seek] % 16;
                 }
@@ -1199,7 +1368,8 @@ namespace mtemu
 
         public bool OpenFile(string filename)
         {
-            using (FileStream fstream = File.OpenRead(filename)) {
+            using (FileStream fstream = File.OpenRead(filename))
+            {
                 byte[] input = new byte[fstream.Length];
                 fstream.Read(input, 0, input.Length);
                 return OpenRaw(input);

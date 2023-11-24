@@ -10,22 +10,26 @@ namespace mtemu
 
         public Command(string[] strWords)
         {
-            if (strWords.Length != length_) {
+            if (strWords.Length != length_)
+            {
                 throw new ArgumentException("Count of words must be equal 10!");
             }
             words_ = new int[length_];
-            for (int i = 0; i < length_; ++i) {
+            for (int i = 0; i < length_; ++i)
+            {
                 words_[i] = Helpers.Mask(Helpers.BinaryToInt(strWords[i]));
             }
         }
 
         public Command(int[] words)
         {
-            if (words.Length != length_) {
+            if (words.Length != length_)
+            {
                 throw new ArgumentException("Count of words must be equal 10!");
             }
             words_ = new int[length_];
-            for (int i = 0; i < length_; ++i) {
+            for (int i = 0; i < length_; ++i)
+            {
                 words_[i] = Helpers.Mask(words[i]);
             }
         }
@@ -55,126 +59,140 @@ namespace mtemu
 
         public string GetName()
         {
-            if (GetCommandView() == ViewType.OFFSET) {
+            if (GetCommandView() == ViewType.OFFSET)
+            {
                 return $"OFFSET = 0x{GetNextAddr():X3}";
             }
 
             string res = "";
 
-            switch (GetCommandView()) {
-            case ViewType.MT_COMMAND:
-                if (GetToType() == ToType.NO_LOAD) {
-                    // Without saving
-                    res += "Y=F=";
-                }
-                else {
-                    string to = GetItem_(WordType.I68)[2] + "=";
-                    to = to.Replace("F/2=", "F/2;F=");
-                    to = to.Replace("2F=", "2F;F=");
-                    to = to.Replace(";", "; ");
-                    res += to;
-                }
-
-                string command = GetItem_(WordType.I35)[2];
-                command = command.Replace("R", GetItem_(WordType.I02)[2]);
-                command = command.Replace("S", GetItem_(WordType.I02)[3]);
-                command = command.Replace("C0", GetItem_(WordType.I35)[3]);
-                res += command;
-
-                res = res.Replace("A", GetRawValue(WordType.A).ToString());
-                res = res.Replace("B", GetRawValue(WordType.B).ToString());
-                res = res.Replace("D", GetRawValue(WordType.D).ToString());
-                res = res.Replace("+0", "");
-                res = res.Replace("-0", "");
-                res = res.Replace("-1+1", "");
-
-                res += "; M1=" + (GetFlag(FlagType.M1) ? "1" : "0");
-                res += "; M0=" + (GetFlag(FlagType.M0) ? "1" : "0");
-                break;
-
-            case ViewType.MEMORY_POINTER:
-                res += $"MemoryPtr=0x{((GetRawValue(WordType.A) << 4) + GetRawValue(WordType.B)):X2}";
-                res += "; NewPtr=";
-                switch (GetIncType()) {
-                case IncType.NO:
-                    res += "OldPtr";
-                    break;
-                case IncType.PLUS:
-                    res += "OldPtr+1";
-                    break;
-                case IncType.MINUS:
-                    res += "OldPtr-1";
-                    break;
-                }
-                break;
-
-            case ViewType.DEVICE_POINTER:
-                res += $"Interface={ GetPortName(GetSelIndex(WordType.DEVICE)) }";
-                break;
-
-            case ViewType.LOAD_HIGH_4BIT:
-            case ViewType.LOAD_LOW_4BIT:
-            case ViewType.LOAD_8BIT:
-                switch (GetFuncType()) {
-                case FuncType.STORE_MEMORY:
-                    if (GetRawValue(WordType.PS) == 0) {
-                        res += $"LOW(Memory(Ptr))=РОН({ GetRawValue(WordType.B) })";
+            switch (GetCommandView())
+            {
+                case ViewType.MT_COMMAND:
+                    if (GetToType() == ToType.NO_LOAD)
+                    {
+                        // Without saving
+                        res += "Y=F=";
                     }
-                    else if (GetRawValue(WordType.PS) == 1) {
-                        res += $"HIGH(Memory(Ptr))=РОН({ GetRawValue(WordType.A) })";
+                    else
+                    {
+                        string to = GetItem_(WordType.I68)[2] + "=";
+                        to = to.Replace("F/2=", "F/2;F=");
+                        to = to.Replace("2F=", "2F;F=");
+                        to = to.Replace(";", "; ");
+                        res += to;
                     }
-                    else {
-                        res += $"Memory(Ptr)=(РОН({ GetRawValue(WordType.A) })<<4)+РОН({ GetRawValue(WordType.B) })";
+
+                    string command = GetItem_(WordType.I35)[2];
+                    command = command.Replace("R", GetItem_(WordType.I02)[2]);
+                    command = command.Replace("S", GetItem_(WordType.I02)[3]);
+                    command = command.Replace("C0", GetItem_(WordType.I35)[3]);
+                    res += command;
+
+                    res = res.Replace("A", GetRawValue(WordType.A).ToString());
+                    res = res.Replace("B", GetRawValue(WordType.B).ToString());
+                    res = res.Replace("D", GetRawValue(WordType.D).ToString());
+                    res = res.Replace("+0", "");
+                    res = res.Replace("-0", "");
+                    res = res.Replace("-1+1", "");
+
+                    res += "; M1=" + (GetFlag(FlagType.M1) ? "1" : "0");
+                    res += "; M0=" + (GetFlag(FlagType.M0) ? "1" : "0");
+                    break;
+
+                case ViewType.MEMORY_POINTER:
+                    res += $"MemoryPtr=0x{((GetRawValue(WordType.A) << 4) + GetRawValue(WordType.B)):X2}";
+                    res += "; NewPtr=";
+                    switch (GetIncType())
+                    {
+                        case IncType.NO:
+                            res += "OldPtr";
+                            break;
+                        case IncType.PLUS:
+                            res += "OldPtr+1";
+                            break;
+                        case IncType.MINUS:
+                            res += "OldPtr-1";
+                            break;
                     }
                     break;
 
-                case FuncType.LOAD_MEMORY:
-                    if (GetRawValue(WordType.PS) == 0) {
-                        res += $"РОН({ GetRawValue(WordType.B) })=LOW(Memory(Ptr))";
-                    }
-                    else if (GetRawValue(WordType.PS) == 1) {
-                        res += $"РОН({ GetRawValue(WordType.A) })=HIGH(Memory(Ptr))";
-                    }
-                    else {
-                        res += $"РОН({ GetRawValue(WordType.A) })=HIGH(Memory(Ptr))";
-                        res += $"; РОН({ GetRawValue(WordType.B) })=LOW(Memory(Ptr))";
+                case ViewType.DEVICE_POINTER:
+                    res += $"Interface={ GetPortName(GetSelIndex(WordType.DEVICE)) }";
+                    break;
+
+                case ViewType.LOAD_HIGH_4BIT:
+                case ViewType.LOAD_LOW_4BIT:
+                case ViewType.LOAD_8BIT:
+                    switch (GetFuncType())
+                    {
+                        case FuncType.STORE_MEMORY:
+                            if (GetRawValue(WordType.PS) == 0)
+                            {
+                                res += $"LOW(Memory(Ptr))=РОН({ GetRawValue(WordType.B) })";
+                            }
+                            else if (GetRawValue(WordType.PS) == 1)
+                            {
+                                res += $"HIGH(Memory(Ptr))=РОН({ GetRawValue(WordType.A) })";
+                            }
+                            else
+                            {
+                                res += $"Memory(Ptr)=(РОН({ GetRawValue(WordType.A) })<<4)+РОН({ GetRawValue(WordType.B) })";
+                            }
+                            break;
+
+                        case FuncType.LOAD_MEMORY:
+                            if (GetRawValue(WordType.PS) == 0)
+                            {
+                                res += $"РОН({ GetRawValue(WordType.B) })=LOW(Memory(Ptr))";
+                            }
+                            else if (GetRawValue(WordType.PS) == 1)
+                            {
+                                res += $"РОН({ GetRawValue(WordType.A) })=HIGH(Memory(Ptr))";
+                            }
+                            else
+                            {
+                                res += $"РОН({ GetRawValue(WordType.A) })=HIGH(Memory(Ptr))";
+                                res += $"; РОН({ GetRawValue(WordType.B) })=LOW(Memory(Ptr))";
+                            }
+                            break;
+
+                        case FuncType.STORE_DEVICE:
+                            switch (GetPointerType())
+                            {
+                                case DataPointerType.LOW_4_BIT:
+                                    res += $"LOW(DEV_PORT)=РОН({ GetRawValue(WordType.B) })";
+                                    break;
+                                case DataPointerType.HIGH_4_BIT:
+                                    res += $"HIGH(DEV_PORT)=РОН({ GetRawValue(WordType.A) })";
+                                    break;
+                                case DataPointerType.FULL_8_BIT:
+                                    res += $"DEV_PORT=(РОН({ GetRawValue(WordType.A) })<<4)+РОН({ GetRawValue(WordType.B) })";
+                                    break;
+                            }
+                            break;
+
+                        case FuncType.LOAD_DEVICE:
+                            switch (GetPointerType())
+                            {
+                                case DataPointerType.LOW_4_BIT:
+                                    res += $"РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT)";
+                                    break;
+                                case DataPointerType.HIGH_4_BIT:
+                                    res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT)";
+                                    break;
+                                case DataPointerType.FULL_8_BIT:
+                                    res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT)";
+                                    res += $"; РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT)";
+                                    break;
+                            }
+                            break;
                     }
                     break;
 
-                case FuncType.STORE_DEVICE:
-                    switch (GetPointerType()) {
-                    case DataPointerType.LOW_4_BIT:
-                        res += $"LOW(DEV_PORT)=РОН({ GetRawValue(WordType.B) })";
-                        break;
-                    case DataPointerType.HIGH_4_BIT:
-                        res += $"HIGH(DEV_PORT)=РОН({ GetRawValue(WordType.A) })";
-                        break;
-                    case DataPointerType.FULL_8_BIT:
-                        res += $"DEV_PORT=(РОН({ GetRawValue(WordType.A) })<<4)+РОН({ GetRawValue(WordType.B) })";
-                        break;
-                    }
+                default:
+                    res += String.Join(" ", words_);
                     break;
-
-                case FuncType.LOAD_DEVICE:
-                    switch (GetPointerType()) {
-                    case DataPointerType.LOW_4_BIT:
-                        res += $"РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT)";
-                        break;
-                    case DataPointerType.HIGH_4_BIT:
-                        res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT)";
-                        break;
-                    case DataPointerType.FULL_8_BIT:
-                        res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT)";
-                        res += $"; РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT)";
-                        break;
-                    }
-                    break;
-                }
-                break;
-
-            default:
-                res += String.Join(" ", words_);
-                break;
             }
 
             return res;
@@ -182,31 +200,36 @@ namespace mtemu
 
         public string GetJumpName()
         {
-            if (GetJumpType() == JumpType.END) {
-                if (GetDiffAddr() == 0) {
+            if (GetJumpType() == JumpType.END)
+            {
+                if (GetDiffAddr() == 0)
+                {
                     return "LDNXT";
                 }
-                else if (GetDiffAddr() > 0) {
+                else if (GetDiffAddr() > 0)
+                {
                     return $"LDNXT+0x{GetDiffAddr():X3}";
                 }
-                else {
+                else
+                {
                     return $"LDNXT-0x{-GetDiffAddr():X3}";
                 }
             }
 
             string res = GetItem_(WordType.CA)[2];
 
-            switch (GetJumpType()) {
-            case JumpType.JNZ:
-            case JumpType.JMP:
-            case JumpType.CLNZ:
-            case JumpType.CALL:
-            case JumpType.JZ:
-            case JumpType.JF3:
-            case JumpType.JOVR:
-            case JumpType.JC4:
-                res += $" 0x{GetNextAddr():X3}";
-                break;
+            switch (GetJumpType())
+            {
+                case JumpType.JNZ:
+                case JumpType.JMP:
+                case JumpType.CLNZ:
+                case JumpType.CALL:
+                case JumpType.JZ:
+                case JumpType.JF3:
+                case JumpType.JOVR:
+                case JumpType.JC4:
+                    res += $" 0x{GetNextAddr():X3}";
+                    break;
             }
 
             return res;
@@ -214,19 +237,25 @@ namespace mtemu
 
         public bool Check()
         {
-            if (isOffset) {
+            if (isOffset)
+            {
                 return true;
             }
-            if (GetRawValue(WordType.I35) == 11) {
-                if (GetRawValue(WordType.PT) > 2 && GetRawValue(WordType.PT) != 8) {
+            if (GetRawValue(WordType.I35) == 11)
+            {
+                if (GetRawValue(WordType.PT) > 2 && GetRawValue(WordType.PT) != 8)
+                {
                     return false;
                 }
-                if (GetRawValue(WordType.PT) == 8 && GetRawValue(WordType.DEVICE) > 3) {
+                if (GetRawValue(WordType.PT) == 8 && GetRawValue(WordType.DEVICE) > 3)
+                {
                     return false;
                 }
             }
-            if (12 <= GetRawValue(WordType.I35) && GetRawValue(WordType.I35) <= 15) {
-                if (GetRawValue(WordType.PS) > 2) {
+            if (12 <= GetRawValue(WordType.I35) && GetRawValue(WordType.I35) <= 15)
+            {
+                if (GetRawValue(WordType.PS) > 2)
+                {
                     return false;
                 }
             }
@@ -235,35 +264,45 @@ namespace mtemu
 
         public ViewType GetCommandView()
         {
-            if (isOffset) {
+            if (isOffset)
+            {
                 return ViewType.OFFSET;
             }
-            else if (GetRawValue(WordType.I35) <= 10) {
+            else if (GetRawValue(WordType.I35) <= 10)
+            {
                 return ViewType.MT_COMMAND;
             }
-            else if (GetRawValue(WordType.I35) == 11) {
-                if (GetRawValue(WordType.PT) <= 7) {
+            else if (GetRawValue(WordType.I35) == 11)
+            {
+                if (GetRawValue(WordType.PT) <= 7)
+                {
                     return ViewType.MEMORY_POINTER;
                 }
-                else {
+                else
+                {
                     return ViewType.DEVICE_POINTER;
                 }
             }
-            else if (12 <= GetRawValue(WordType.I35) && GetRawValue(WordType.I35) <= 15) {
-                if (GetRawValue(WordType.PS) == 0) {
+            else if (12 <= GetRawValue(WordType.I35) && GetRawValue(WordType.I35) <= 15)
+            {
+                if (GetRawValue(WordType.PS) == 0)
+                {
                     return ViewType.LOAD_LOW_4BIT;
                 }
-                else if (GetRawValue(WordType.PS) == 1) {
+                else if (GetRawValue(WordType.PS) == 1)
+                {
                     return ViewType.LOAD_HIGH_4BIT;
                 }
-                else {
+                else
+                {
                     return ViewType.LOAD_8BIT;
                 }
             }
             return ViewType.UNKNOWN;
         }
 
-        public int this[int i] {
+        public int this[int i]
+        {
             get { return words_[i]; }
             set { words_[i] = Helpers.Mask(value); }
         }
@@ -281,7 +320,8 @@ namespace mtemu
         public int GetRawValue(WordType type)
         {
             int textIndex = GetTextIndexByType(type);
-            if (textIndex == -1) {
+            if (textIndex == -1)
+            {
                 return -1;
             }
             return words_[textIndex];
@@ -290,41 +330,54 @@ namespace mtemu
         public int GetSelIndex(WordType type)
         {
             int raw = GetRawValue(type);
-            if (raw == -1) {
+            if (raw == -1)
+            {
                 return -1;
             }
 
-            if (type == WordType.I02 || type == WordType.I68) {
+            if (type == WordType.I02 || type == WordType.I68)
+            {
                 return raw % 8;
             }
-            else if (type == WordType.PT) {
-                if (raw == 8) {
+            else if (type == WordType.PT)
+            {
+                if (raw == 8)
+                {
                     return 3;
                 }
-                else if (raw < 3) {
+                else if (raw < 3)
+                {
                     return raw;
                 }
-                else {
+                else
+                {
                     return -1;
                 }
             }
-            else if (type == WordType.DEVICE) {
-                if (raw < 4) {
+            else if (type == WordType.DEVICE)
+            {
+                if (raw < 4)
+                {
                     return raw;
                 }
-                else {
+                else
+                {
                     return -1;
                 }
             }
-            else if (type == WordType.PS) {
-                if (raw < 3) {
+            else if (type == WordType.PS)
+            {
+                if (raw < 3)
+                {
                     return raw;
                 }
-                else {
+                else
+                {
                     return -1;
                 }
             }
-            else {
+            else
+            {
                 return raw;
             }
         }
@@ -332,23 +385,29 @@ namespace mtemu
         public void SetValue(WordType type, int selIndex)
         {
             int textIndex = GetTextIndexByType(type);
-            if (textIndex == -1) {
+            if (textIndex == -1)
+            {
                 return;
             }
 
-            if (type == WordType.I02 || type == WordType.I68) {
+            if (type == WordType.I02 || type == WordType.I68)
+            {
                 int oldHigh = Helpers.GetBit(words_[textIndex], WORD_SIZE - 1);
                 words_[textIndex] = oldHigh * Helpers.GetBitMask(WORD_SIZE - 1) + Helpers.Mask(selIndex, WORD_SIZE - 1);
             }
-            else if (type == WordType.PT) {
-                if (selIndex == 3) {
+            else if (type == WordType.PT)
+            {
+                if (selIndex == 3)
+                {
                     words_[textIndex] = 8;
                 }
-                else {
+                else
+                {
                     words_[textIndex] = Helpers.Mask(selIndex);
                 }
             }
-            else {
+            else
+            {
                 words_[textIndex] = Helpers.Mask(selIndex);
             }
         }
@@ -356,7 +415,8 @@ namespace mtemu
         public bool GetFlag(FlagType flagIndex)
         {
             int textIndex = GetTextIndexByFlag(flagIndex);
-            if (textIndex == -1) {
+            if (textIndex == -1)
+            {
                 return false;
             }
             return Helpers.IsBitSet(words_[textIndex], WORD_SIZE - 1);
@@ -365,7 +425,8 @@ namespace mtemu
         public void SetFlag(FlagType flagIndex, bool value)
         {
             int textIndex = GetTextIndexByFlag(flagIndex);
-            if (textIndex == -1) {
+            if (textIndex == -1)
+            {
                 return;
             }
 
@@ -383,7 +444,8 @@ namespace mtemu
         public int GetDiffAddr()
         {
             int addr = GetNextAddr();
-            if (Helpers.IsBitSet(GetRawValue(WordType.AR_HIGH), WORD_SIZE - 1)) {
+            if (Helpers.IsBitSet(GetRawValue(WordType.AR_HIGH), WORD_SIZE - 1))
+            {
                 addr = -Helpers.Mask(~addr + 1, WORD_SIZE * 3 - 1);
             }
             return addr;
@@ -411,36 +473,40 @@ namespace mtemu
 
         public JumpType GetJumpType()
         {
-            byte value = (byte) GetRawValue(WordType.CA);
-            if (Enum.IsDefined(typeof(JumpType), value)) {
-                return (JumpType) value;
+            byte value = (byte)GetRawValue(WordType.CA);
+            if (Enum.IsDefined(typeof(JumpType), value))
+            {
+                return (JumpType)value;
             }
             return JumpType.Unknown;
         }
 
         public FuncType GetFuncType()
         {
-            byte value = (byte) GetRawValue(WordType.I35);
-            if (Enum.IsDefined(typeof(FuncType), value)) {
-                return (FuncType) value;
+            byte value = (byte)GetRawValue(WordType.I35);
+            if (Enum.IsDefined(typeof(FuncType), value))
+            {
+                return (FuncType)value;
             }
             return FuncType.UNKNOWN;
         }
 
         public FromType GetFromType()
         {
-            byte value = (byte) Helpers.Mask(GetRawValue(WordType.I02), WORD_SIZE - 1);
-            if (Enum.IsDefined(typeof(FromType), value)) {
-                return (FromType) value;
+            byte value = (byte)Helpers.Mask(GetRawValue(WordType.I02), WORD_SIZE - 1);
+            if (Enum.IsDefined(typeof(FromType), value))
+            {
+                return (FromType)value;
             }
             return FromType.UNKNOWN;
         }
 
         public ToType GetToType()
         {
-            byte value = (byte) Helpers.Mask(GetRawValue(WordType.I68), WORD_SIZE - 1);
-            if (Enum.IsDefined(typeof(ToType), value)) {
-                return (ToType) value;
+            byte value = (byte)Helpers.Mask(GetRawValue(WordType.I68), WORD_SIZE - 1);
+            if (Enum.IsDefined(typeof(ToType), value))
+            {
+                return (ToType)value;
             }
             return ToType.UNKNOWN;
         }
@@ -449,37 +515,40 @@ namespace mtemu
         {
             byte m0 = Convert.ToByte(GetFlag(FlagType.M0));
             byte m1 = Convert.ToByte(GetFlag(FlagType.M1));
-            byte m10 = (byte) ((m1 << 1) | m0);
+            byte m10 = (byte)((m1 << 1) | m0);
 
-            if (Enum.IsDefined(typeof(ShiftType), m10)) {
-                return (ShiftType) m10;
+            if (Enum.IsDefined(typeof(ShiftType), m10))
+            {
+                return (ShiftType)m10;
             }
             return ShiftType.UNKNOWN;
         }
 
         public IncType GetIncType()
         {
-            byte value = (byte) GetRawValue(WordType.PT);
-            if (Enum.IsDefined(typeof(IncType), value)) {
-                return (IncType) value;
+            byte value = (byte)GetRawValue(WordType.PT);
+            if (Enum.IsDefined(typeof(IncType), value))
+            {
+                return (IncType)value;
             }
             return IncType.UNKNOWN;
         }
 
         public DataPointerType GetPointerType()
         {
-            byte value = (byte) GetRawValue(WordType.PS);
-            if (Enum.IsDefined(typeof(DataPointerType), value)) {
-                return (DataPointerType) value;
+            byte value = (byte)GetRawValue(WordType.PS);
+            if (Enum.IsDefined(typeof(DataPointerType), value))
+            {
+                return (DataPointerType)value;
             }
             return DataPointerType.UNKNOWN;
         }
 
         public DeviceType GetDevice()
         {
-            byte value = (byte) GetRawValue(WordType.DEVICE);
+            byte value = (byte)GetRawValue(WordType.DEVICE);
             if (Enum.IsDefined(typeof(DeviceType), value))
-                return (DeviceType) value;
+                return (DeviceType)value;
 
             return DeviceType.UNKNOWN;
         }
