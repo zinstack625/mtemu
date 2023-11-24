@@ -42,20 +42,7 @@ namespace mtemu
         private const byte CMD_RESPONSE_PORT_READ_LENGTH = CMD_RESPONSE_LENGTH + 2;
         private const byte CMD_RESPONSE_SERIAL_GET_LENGTH = CMD_RESPONSE_LENGTH + SERIAL_LENGTH;
 
-        public enum InPort : byte
-        {
-            PORT2_4_LOW = (2 << 2) | 1,
-            PORT2_4_HIGH = (2 << 2) | 2,
-            PORT2_8 = (2 << 2) | 3,
-
-            PORT3_4_LOW = (3 << 2) | 1,
-            PORT3_4_HIGH = (3 << 2) | 2,
-            PORT3_8 = (3 << 2) | 3,
-
-            PORT_UNKNOWN = 255,
-        }
-
-        public enum OutPort : byte
+        public enum Port : byte
         {
             PORT0_4_LOW = (0 << 2) | 1,
             PORT0_4_HIGH = (0 << 2) | 2,
@@ -64,6 +51,14 @@ namespace mtemu
             PORT1_4_LOW = (1 << 2) | 1,
             PORT1_4_HIGH = (1 << 2) | 2,
             PORT1_8 = (1 << 2) | 3,
+
+            PORT2_4_LOW = (2 << 2) | 1,
+            PORT2_4_HIGH = (2 << 2) | 2,
+            PORT2_8 = (2 << 2) | 3,
+
+            PORT3_4_LOW = (3 << 2) | 1,
+            PORT3_4_HIGH = (3 << 2) | 2,
+            PORT3_8 = (3 << 2) | 3,
 
             PORT_UNKNOWN = 255,
         }
@@ -348,7 +343,7 @@ namespace mtemu
             }
         }
 
-        public void WritePort(OutPort outPort, DataPointerType pointerType, byte val)
+        public void WritePort(Port Port, DataPointerType pointerType, byte val)
         {
             if (deviceComPort_ == null || !deviceComPort_.IsOpen)
             {
@@ -362,7 +357,7 @@ namespace mtemu
             }
 
             byte[] req_buf = new byte[CMD_REQUEST_PORT_WRITE_LENGTH];
-            byte[] data_buf = { (byte)outPort, val };
+            byte[] data_buf = { (byte)Port, val };
             byte data_size = (byte)data_buf.Length;
             object res;
 
@@ -370,7 +365,7 @@ namespace mtemu
             CmdSendRecv(ref deviceComPort_, req_buf, out res);
         }
 
-        public byte ReadPort(InPort inPort, DataPointerType pointerType)
+        public byte ReadPort(Port Port, DataPointerType pointerType)
         {
             if (deviceComPort_ == null || !deviceComPort_.IsOpen)
             {
@@ -384,7 +379,7 @@ namespace mtemu
             }
 
             byte[] req_buf = new byte[CMD_REQUEST_PORT_READ_LENGTH];
-            byte[] data_buf = { (byte)inPort, 0 };
+            byte[] data_buf = { (byte)Port, 0 };
             byte data_size = (byte)data_buf.Length;
             object res;
 
@@ -396,7 +391,7 @@ namespace mtemu
 
             byte[] buf = (byte[])res;
             var port = buf[0] & CMD_DATA_LEN_MASK;
-            if (port != (byte)inPort)
+            if (port != (byte)Port)
                 throw new ArgumentException("response port is invalid");
 
             byte val = buf[1];
