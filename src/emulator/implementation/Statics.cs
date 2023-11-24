@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace mtemu
@@ -146,11 +147,17 @@ namespace mtemu
     partial class Call
     {
         public static int ADDRESS_SIZE_BIT = 12;
-        public static int COMMENT_MAX_SIZE = 50;
+        public static int ARG_SIZE_BIT = 8;
+        public static int NAME_MAX_SIZE = 8;
 
         public static Call GetDefault()
         {
-            return new Call(0, "");
+            return new Call(0, 0, 0);
+        }
+
+        public static int CallSize()
+        {
+            return 3 * sizeof(UInt16) + sizeof(byte) + sizeof(bool);
         }
     }
 
@@ -363,7 +370,8 @@ namespace mtemu
 
         public static int GetTextIndexByType(WordType type)
         {
-            if (wordIndexes_.ContainsKey(type)) {
+            if (wordIndexes_.ContainsKey(type))
+            {
                 return wordIndexes_[type];
             }
             return -1;
@@ -371,13 +379,14 @@ namespace mtemu
 
         public static int GetTextIndexByFlag(FlagType type)
         {
-            switch (type) {
-            case FlagType.M0:
-                return wordIndexes_[WordType.I02];
-            case FlagType.M1:
-                return wordIndexes_[WordType.I68];
-            case FlagType.C0:
-                return wordIndexes_[WordType.I35];
+            switch (type)
+            {
+                case FlagType.M0:
+                    return wordIndexes_[WordType.I02];
+                case FlagType.M1:
+                    return wordIndexes_[WordType.I68];
+                case FlagType.C0:
+                    return wordIndexes_[WordType.I35];
             }
             return -1;
         }
@@ -390,7 +399,8 @@ namespace mtemu
         public static string GetPortName(int number)
         {
             var items = items_[WordType.DEVICE];
-            if (number < 0 || number >= items.Length) {
+            if (number < 0 || number >= items.Length)
+            {
                 return "NONE";
             }
 
@@ -453,5 +463,15 @@ namespace mtemu
         {
             return memSize_;
         }
+
+        // code => {name, address}
+        public static Dictionary<int, Tuple<string, int>> mapJumps_ => new Dictionary<int, Tuple<string, int>>
+        {
+            {1, new Tuple<string, int>("", 1) },
+            {2, new Tuple<string, int>("", 1) },
+            {3, new Tuple<string, int>("", 1) },
+            {4, new Tuple<string, int>("", 1) },
+            {5, new Tuple<string, int>("", 1) },
+        };
     }
 }

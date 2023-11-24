@@ -60,8 +60,10 @@ namespace mtemu
 
         public static byte[] GetData(int number)
         {
-            if (easterEggs_.ContainsKey(number)) {
-                if (!easterEggs_[number].IsFound()) {
+            if (easterEggs_.ContainsKey(number))
+            {
+                if (!easterEggs_[number].IsFound())
+                {
                     easterEggs_[number].SetFound();
                     ++founded_;
                 }
