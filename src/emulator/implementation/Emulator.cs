@@ -30,8 +30,6 @@ namespace mtemu
         private int[] memory_ = new int[memSize_];
 
         private int devPtr_;
-        // reserved for future use
-        private int devIf_;
 
         private int prevRegA_;
         private int prevRegB_;
@@ -767,7 +765,6 @@ namespace mtemu
         private void SetDevicePtr_()
         {
             devPtr_ = Current_().GetRawValue(WordType.A);
-            devIf_ = 0;
         }
 
         private void LoadData_()
@@ -909,6 +906,8 @@ namespace mtemu
                 if (calls_.Count > 0)
                 {
                     Call call = calls_[0];
+                    memory_[0] = call.GetArg0();
+                    memory_[1] = call.GetArg1();
                     pc_ = GetAddrByCode(call.GetCode());
                     callIndex_ = 0;
                 }
