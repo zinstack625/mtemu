@@ -1130,14 +1130,46 @@ namespace mtemu
             return calls_[index];
         }
 
-        public void AddCall(int index, Call call)
+        public bool AddCall(int index, int code, int arg0, int arg1)
         {
+            if (!mapCalls_.ContainsKey(code)) return false;
+            Call call = new Call(code, arg0, arg1);
+            if (mapJumps_.ContainsKey(code))
+            {
+                switch (code)
+                {
+                    case 0:
+                        call = new Call(code, arg0, arg1, true, JumpType.JMP);
+                        break;
+                    case 1:
+                        call = new Call(code, arg0, arg1, true, JumpType.JC4);
+                        break;
+                    case 2:
+                        call = new Call(code, arg0, arg1, true, JumpType.JZ);
+                        break;
+                    case 3:
+                        call = new Call(code, arg0, arg1, true, JumpType.JSNC4);
+                        break;
+                    case 4:
+                        call = new Call(code, arg0, arg1, true, JumpType.JNZ);
+                        break;
+                }
+            }
             calls_.Insert(index, call);
+            return true;
         }
 
-        public void UpdateCall(int index, Call call)
+        public bool AddCall(int index, int code, int arg0, int arg1, bool altCommandAddress, JumpType flag)
         {
-            calls_[index] = call;
+            if (!mapCalls_.ContainsKey(code)) return false;
+            Call call = new Call(code, arg0, arg1, altCommandAddress, flag);
+            calls_.Insert(index, call);
+            return true;
+        }
+        public void UpdateCall(int index, int code, int arg0, int arg1)
+        {
+            RemoveCall(index);
+            AddCall(index, code, arg0, arg1);
         }
 
         public void RemoveCall(int index)
@@ -1339,8 +1371,7 @@ namespace mtemu
                 int arg1 = (input[seek++] << 8) + input[seek++];
                 bool altCommandAddress = (input[seek++] == 1);
                 JumpType flag = (JumpType)Enum.Parse(typeof(JumpType), input[seek++].ToString());
-                Call call = new Call(code, arg0, arg1, altCommandAddress, flag);
-                AddCall(i, call);
+                AddCall(i, code, arg0, arg1, altCommandAddress, flag);
             }
 
             int commandsCount = 0;
