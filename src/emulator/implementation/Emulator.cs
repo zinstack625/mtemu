@@ -736,7 +736,8 @@ namespace mtemu
 
         private PortExtender.Port GetPort(DataPointerType type)
         {
-            if (devPtr_ == -1) {
+            if (devPtr_ == -1)
+            {
                 return PortExtender.Port.PORT_UNKNOWN;
             }
 
