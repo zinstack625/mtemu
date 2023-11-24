@@ -467,11 +467,11 @@ namespace mtemu
         // code => {name, address}
         public static Dictionary<int, Tuple<string, int>> mapJumps_ => new Dictionary<int, Tuple<string, int>>
         {
-            {1, new Tuple<string, int>("", 1) },
-            {2, new Tuple<string, int>("", 1) },
-            {3, new Tuple<string, int>("", 1) },
-            {4, new Tuple<string, int>("", 1) },
-            {5, new Tuple<string, int>("", 1) },
+            {0, new Tuple<string, int>("JMP", 0xfffb) },
+            {1, new Tuple<string, int>("JC", 0xfffc) },
+            {2, new Tuple<string, int>("JZ", 0xfffd) },
+            {3, new Tuple<string, int>("JNC", 0xfffe) },
+            {4, new Tuple<string, int>("JNZ", 0xffff) },
         };
     }
 }
