@@ -164,7 +164,6 @@ namespace mtemu
     partial class Command
     {
         public static int WORD_SIZE = 4;
-
         private static int length_ = 10;
 
         // Numbers of text boxes
@@ -428,7 +427,7 @@ namespace mtemu
         private static byte[] fileHeader_ = Encoding.ASCII.GetBytes("MTEM");
         private static byte[] binFileHeader_ = Encoding.ASCII.GetBytes("");
 
-        private static int programSize_ = 1 << 12;
+        private static int programSize_ = 0xf00;
         private static int stackSize_ = 1 << 4;
         private static int regSize_ = 1 << 4;
         private static int memSize_ = 1 << 8;
@@ -474,7 +473,7 @@ namespace mtemu
             {4, new Tuple<string, int>("JNZ", 0xfff) },
         };
 
-        public static List<Command> callCommands => new List<Command>
+        public static List<Command> callCommands = new List<Command>
         {
             new Command(
                 new string[] {"1111", "1111", "1011", "0010", "0001", "0111", "0000", "0000", "0000", "0000"},
@@ -494,6 +493,10 @@ namespace mtemu
                 ),
             new Command(
                 new string[] {"0000", "0000", "0000", "0011", "0001", "0111", "0000", "0000", "0000", "0000"}
+                ),
+            new Command(
+                new string[] {"0000", "0000", "0000", "0011", "0001", "0111", "0000", "0000", "0000", "0000"},
+                true
                 ),
         };
     }
