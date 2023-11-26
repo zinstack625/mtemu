@@ -107,7 +107,10 @@ namespace mtemu
 
         private void InitCommands()
         {
-            commands_ = callCommands;
+            foreach (Command cmd in callCommands)
+            {
+                AddCommandNotCheck(cmd);
+            }
         }
 
         private void BackupFlags_()
@@ -128,6 +131,11 @@ namespace mtemu
             ovr_ = prevOvr_;
             g_ = prevG_;
             p_ = prevP_;
+        }
+
+        private int GetLastCommandBeforOffset(int index)
+        {
+            return 0;
         }
 
         private int GetOffset_(int last)
@@ -180,11 +188,48 @@ namespace mtemu
             {
                 return false;
             }
-            command.SetNumber(GetOffset_(index));
-            if (command.GetNumber() > programSize_)
+
+            if (command.isOffset)
+            {
+                command.SetNumber(command.GetNextAddr());
+            }
+            else
+            {
+                command.SetNumber(GetOffset_(index));
+            }
+
+            if (command.GetNumber() >= programSize_)
             {
                 return false;
             }
+
+            if (command.isOffset && commands_[index].GetNumber() < 0xf00)
+            {
+
+            }
+
+            commands_.Insert(index, command);
+            UpdateOffsets_(index);
+            return true;
+        }
+
+        private bool AddCommandNotCheck(Command command)
+        {
+            int index = CommandsCount();
+            if (!command.Check())
+            {
+                return false;
+            }
+
+            if (command.isOffset)
+            {
+                command.SetNumber(command.GetNextAddr());
+            }
+            else
+            {
+                command.SetNumber(GetOffset_(index));
+            }
+
             commands_.Insert(index, command);
             UpdateOffsets_(index);
             return true;
@@ -196,6 +241,13 @@ namespace mtemu
             {
                 return false;
             }
+
+            if (command.isOffset)
+            {
+                command.SetNumber(command.GetNextAddr());
+            }
+
+            if (command.GetNumber() >= programSize_) return false;
             commands_[index] = command;
             UpdateOffsets_(index);
             return true;
@@ -203,6 +255,8 @@ namespace mtemu
 
         public void RemoveCommand(int index)
         {
+            Command command = commands_[index];
+            if (command.GetNumber() >= programSize_) return;
             commands_.RemoveAt(index);
             UpdateOffsets_(index);
         }
