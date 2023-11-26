@@ -34,6 +34,20 @@ namespace mtemu
             }
         }
 
+        public Command(string[] strWords, bool offset)
+        {
+            isOffset = offset;
+            if (strWords.Length != length_)
+            {
+                throw new ArgumentException("Count of words must be equal 10!");
+            }
+            words_ = new int[length_];
+            for (int i = 0; i < length_; ++i)
+            {
+                words_[i] = Helpers.Mask(Helpers.BinaryToInt(strWords[i]));
+            }
+        }
+
         public Command(Command other)
         {
             isOffset = other.isOffset;

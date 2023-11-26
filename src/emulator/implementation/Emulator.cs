@@ -94,9 +94,20 @@ namespace mtemu
 
         public Emulator(PortExtender portExtender)
         {
-            mapCalls_ = mapJumps_;
+            InitCommands();
+            InitCalls();
             portExtender_ = portExtender;
             Reset();
+        }
+
+        private void InitCalls()
+        {
+            mapCalls_ = mapJumps_;
+        }
+
+        private void InitCommands()
+        {
+            commands_ = callCommands;
         }
 
         private void BackupFlags_()
@@ -292,6 +303,13 @@ namespace mtemu
                     Call call = calls_[callIndex_];
                     if (call.GetAltCommandAddress())
                     {
+                        c4_ = prevC4_;
+                        z_ = prevZ_;
+                        ovr_ = prevOvr_;
+                        f3_ = prevF3_;
+                        g_ = prevG_;
+                        p_ = prevP_;
+
                         switch (call.GetFlag())
                         {
                             case JumpType.JZ:
