@@ -300,6 +300,11 @@ namespace mtemu
             switch (Current_().GetJumpType())
             {
                 case JumpType.END:
+                    if (callIndex_ >= calls_.Count || calls_.Count <= 0 || callIndex_ == -1)
+                    {
+                        end_ = true;
+                        return;
+                    }
                     Call call = calls_[callIndex_];
                     if (call.GetAltCommandAddress())
                     {
