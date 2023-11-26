@@ -148,7 +148,7 @@ namespace mtemu
     {
         public static int ADDRESS_SIZE_BIT = 12;
         public static int ARG_SIZE_BIT = 8;
-        public static int NAME_MAX_SIZE = 8;
+        public static int NAME_MAX_SIZE = 16;
 
         public static Call GetDefault()
         {
@@ -467,11 +467,11 @@ namespace mtemu
         // code => {name, address}
         public static Dictionary<int, Tuple<string, int>> mapJumps_ => new Dictionary<int, Tuple<string, int>>
         {
-            {0, new Tuple<string, int>("JMP", 0xfffb) },
-            {1, new Tuple<string, int>("JC", 0xfffc) },
-            {2, new Tuple<string, int>("JZ", 0xfffd) },
-            {3, new Tuple<string, int>("JNC", 0xfffe) },
-            {4, new Tuple<string, int>("JNZ", 0xffff) },
+            {0, new Tuple<string, int>("JMP", 0xffb) },
+            {1, new Tuple<string, int>("JC", 0xffc) },
+            {2, new Tuple<string, int>("JZ", 0xffd) },
+            {3, new Tuple<string, int>("JNC", 0xffe) },
+            {4, new Tuple<string, int>("JNZ", 0xfff) },
         };
     }
 }
