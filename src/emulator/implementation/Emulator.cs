@@ -162,14 +162,15 @@ namespace mtemu
         private int UpdateOffsets_(int first = 0)
         {
             int offset = first == 0 ? -1 : commands_[first - 1].GetNumber();
-            for (int i = first; i < commands_.Count; ++i)
+            for (int i = first; i < CommandsCount(); ++i)
             {
-                if (i > 0 && commands_[i - 1].isOffset)
+                if (commands_[i].isOffset)
                 {
-                    offset = commands_[i - 1].GetNextAddr();
+                    offset = commands_[i].GetNextAddr();
                 }
                 else
                 {
+                    if (i > 0 && commands_[i - 1].isOffset) continue;
                     ++offset;
                 }
                 commands_[i].SetNumber(offset);
@@ -201,11 +202,6 @@ namespace mtemu
             if (command.GetNumber() >= programSize_)
             {
                 return false;
-            }
-
-            if (command.isOffset && commands_[index].GetNumber() < 0xf00)
-            {
-
             }
 
             commands_.Insert(index, command);
