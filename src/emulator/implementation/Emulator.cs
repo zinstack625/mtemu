@@ -190,11 +190,6 @@ namespace mtemu
             return true;
         }
 
-        public Command LastCommand()
-        {
-            return commands_.Last();
-        }
-
         public void RemoveCommand(int index)
         {
             commands_.RemoveAt(index);
