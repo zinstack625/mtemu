@@ -199,7 +199,7 @@ namespace mtemu
                 command.SetNumber(GetOffset_(index));
             }
 
-            if (command.GetNumber() >= programSize_)
+            if (command.GetNumber() >= userProgramSize)
             {
                 return false;
             }
@@ -243,7 +243,7 @@ namespace mtemu
                 command.SetNumber(command.GetNextAddr());
             }
 
-            if (command.GetNumber() >= programSize_) return false;
+            if (command.GetNumber() >= userProgramSize) return false;
             commands_[index] = command;
             UpdateOffsets_(index);
             return true;
@@ -252,7 +252,7 @@ namespace mtemu
         public void RemoveCommand(int index)
         {
             Command command = commands_[index];
-            if (command.GetNumber() >= programSize_) return;
+            if (command.GetNumber() >= userProgramSize) return;
             commands_.RemoveAt(index);
             UpdateOffsets_(index);
         }
