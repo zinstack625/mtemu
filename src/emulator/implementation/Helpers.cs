@@ -111,6 +111,16 @@ namespace mtemu
             return new string(arr);
         }
 
+        public static string IntToHex(int num, int minLen)
+        {
+            string res = num.ToString("X");
+
+            while (res.Length < minLen)
+                res = "0" + res;
+
+            return res;
+        }
+
         public static int GetBit(int value, int number)
         {
             return (value >> number) & 1;
