@@ -300,7 +300,7 @@ namespace mtemu
             switch (Current_().GetJumpType())
             {
                 case JumpType.END:
-                    if (callIndex_ >= calls_.Count || calls_.Count <= 0 || callIndex_ == -1)
+                    if (callIndex_ >= calls_.Count || calls_.Count <= 0)
                     {
                         end_ = true;
                         return;
