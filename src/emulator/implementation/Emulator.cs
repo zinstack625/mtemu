@@ -1167,7 +1167,7 @@ namespace mtemu
         public void UpdateCall(int index, int code, int arg0, int arg1)
         {
             if (arg0 > 0xff || arg1 > 0xff) return;
-            AddCall(index, code, arg0, arg1);
+            if (!AddCall(index, code, arg0, arg1)) return;
             RemoveCall(index + 1);
         }
 
