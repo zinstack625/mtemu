@@ -1187,11 +1187,12 @@ namespace mtemu
             calls_.Insert(index, call);
             return true;
         }
-        public void UpdateCall(int index, int code, int arg0, int arg1)
+        public bool UpdateCall(int index, int code, int arg0, int arg1)
         {
-            if (arg0 > 0xff || arg1 > 0xff) return;
-            if (!AddCall(index, code, arg0, arg1)) return;
+            if (arg0 > 0xff || arg1 > 0xff) return false;
+            if (!AddCall(index, code, arg0, arg1)) return false;
             RemoveCall(index + 1);
+            return true;
         }
 
         public void RemoveCall(int index)
