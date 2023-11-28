@@ -977,7 +977,7 @@ namespace mtemu
                     memory_[0] = call.GetArg0();
                     memory_[1] = call.GetArg1();
                     pc_ = GetAddrByCode(call.GetCode());
-                    callIndex_ = 0;
+                    callIndex_ = 1;
                 }
                 else
                 {
