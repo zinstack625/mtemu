@@ -358,12 +358,7 @@ namespace mtemu
                     Call call = calls_[callIndex_];
                     if (call.GetAltCommandAddress())
                     {
-                        c4_ = prevC4_;
-                        z_ = prevZ_;
-                        ovr_ = prevOvr_;
-                        f3_ = prevF3_;
-                        g_ = prevG_;
-                        p_ = prevP_;
+                        RestoreFlags();
 
                         switch (call.GetFlag())
                         {
