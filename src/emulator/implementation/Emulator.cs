@@ -328,6 +328,16 @@ namespace mtemu
             return -1;
         }
 
+        public string GetNameByCode(int code)
+        {
+            if (mapCalls_.ContainsKey(code))
+            {
+                Tuple<string, int> nameAddr = mapCalls_[code];
+                return nameAddr.Item1;
+            }
+            return "";
+        }
+
         private void Jump_()
         {
             prevPc_ = pc_;
