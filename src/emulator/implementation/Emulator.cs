@@ -109,7 +109,7 @@ namespace mtemu
         {
             foreach (Command cmd in callCommands)
             {
-                AddCommandNotCheck(cmd);
+                AddLibCommand(cmd);
             }
         }
 
@@ -135,47 +135,36 @@ namespace mtemu
 
         private int GetLastCommandBeforOffset(int index)
         {
-            return 0;
-        }
-
-        private int GetOffset_(int last)
-        {
-            int offset = 0;
-            for (int i = 0; i < commands_.Count; ++i)
+            while (index < CommandsCount())
             {
-                if (i == last)
-                {
-                    break;
-                }
-                if (commands_[i].isOffset)
-                {
-                    offset = commands_[i].GetNextAddr();
-                }
-                else
-                {
-                    ++offset;
-                }
+                if (GetCommand(index).isOffset) break;
+                ++index;
             }
-            return offset;
+            return index;
         }
 
-        private int UpdateOffsets_(int first = 0)
+        private int GetOffset_(int index)
         {
-            int offset = first == 0 ? -1 : commands_[first - 1].GetNumber();
+            // Подсчет OffSet для команды по индексу index
+            // index = commands[index - 1].GetNumber() + 1 || 0
+            return index > 0 ? GetCommand(index - 1).GetNumber() + 1 : 0;
+        }
+
+        private void UpdateOffsets_(int first = 0)
+        {
+            // Обновление все OffSet с индекса first
             for (int i = first; i < CommandsCount(); ++i)
             {
-                if (commands_[i].isOffset)
+                Command command = GetCommand(i);
+                if (command.isOffset)
                 {
-                    offset = commands_[i].GetNextAddr();
+                    command.SetNumber(command.GetNextAddr() - 1);
                 }
                 else
                 {
-                    if (i > 0 && commands_[i - 1].isOffset) continue;
-                    ++offset;
+                    command.SetNumber(GetOffset_(i));
                 }
-                commands_[i].SetNumber(offset);
             }
-            return offset;
         }
 
         public Command GetCommand(int index)
@@ -183,43 +172,35 @@ namespace mtemu
             return commands_[index];
         }
 
-        public bool AddCommand(int index, Command command)
+        public bool AddUserCommand(int index, Command command)
         {
-            if (!command.Check())
-            {
-                return false;
-            }
+            if (!command.Check()) return false;
 
             if (command.isOffset)
             {
-                command.SetNumber(command.GetNextAddr());
+                command.SetNumber(command.GetNextAddr() - 1);
             }
             else
             {
                 command.SetNumber(GetOffset_(index));
             }
 
-            if (command.GetNumber() >= userProgramSize)
-            {
-                return false;
-            }
+            if (command.GetNumber() >= userProgramSize) return false;
+            if (GetLastCommandBeforOffset(index + 1) - index - 1 + command.GetNumber() >= userProgramSize) return false;
 
             commands_.Insert(index, command);
-            UpdateOffsets_(index);
+            UpdateOffsets_(index + 1);
             return true;
         }
 
-        private bool AddCommandNotCheck(Command command)
+        private bool AddLibCommand(Command command)
         {
             int index = CommandsCount();
-            if (!command.Check())
-            {
-                return false;
-            }
+            if (!command.Check()) return false;
 
             if (command.isOffset)
             {
-                command.SetNumber(command.GetNextAddr());
+                command.SetNumber(command.GetNextAddr() - 1);
             }
             else
             {
@@ -227,34 +208,38 @@ namespace mtemu
             }
 
             commands_.Insert(index, command);
-            UpdateOffsets_(index);
+            UpdateOffsets_(index + 1);
             return true;
         }
 
         public bool UpdateCommand(int index, Command command)
         {
-            if (!command.Check())
-            {
-                return false;
-            }
+            if (!command.Check()) return false;
 
             if (command.isOffset)
             {
-                command.SetNumber(command.GetNextAddr());
+                command.SetNumber(command.GetNextAddr() - 1);
+            }
+            else
+            {
+                command.SetNumber(GetOffset_(index));
             }
 
             if (command.GetNumber() >= userProgramSize) return false;
+            if (GetLastCommandBeforOffset(index + 1) - index - 1 + command.GetNumber() >= userProgramSize) return false;
+
             commands_[index] = command;
-            UpdateOffsets_(index);
+            UpdateOffsets_(index + 1);
             return true;
         }
 
-        public void RemoveCommand(int index)
+        public bool RemoveCommand(int index)
         {
-            Command command = commands_[index];
-            if (command.GetNumber() >= userProgramSize) return;
+            Command command = GetCommand(index);
+            if (command.GetNumber() >= userProgramSize || command.isOffset && command.GetNumber() >= userProgramSize - 1) return false;
             commands_.RemoveAt(index);
             UpdateOffsets_(index);
+            return false;
         }
 
         public void MoveCommandUp(int index)
