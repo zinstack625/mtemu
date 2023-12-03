@@ -557,14 +557,5 @@ namespace mtemu
             }
             return DataPointerType.UNKNOWN;
         }
-
-        public DeviceType GetDevice()
-        {
-            byte value = (byte)GetRawValue(WordType.DEVICE);
-            if (Enum.IsDefined(typeof(DeviceType), value))
-                return (DeviceType)value;
-
-            return DeviceType.UNKNOWN;
-        }
     }
 }
