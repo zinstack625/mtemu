@@ -790,6 +790,13 @@ namespace mtemu
             mp_ = (Current_().GetRawValue(WordType.A) << 4) + Current_().GetRawValue(WordType.B);
         }
 
+        // 4 бита адреса устройства, подключенного к порту
+        private int GetDeviceAddress()
+        {
+            return Current_().GetRawValue(WordType.D);
+        }
+
+
         private PortExtender.Port GetPort(DataPointerType type)
         {
             if (devPtr_ == -1)
@@ -868,6 +875,7 @@ namespace mtemu
             case FuncType.STORE_DEVICE:
                     {
                         PortExtender.Port Port = GetPort(pointerType);
+                        int Addr = GetDeviceAddress();
                         if (Port != PortExtender.Port.PORT_UNKNOWN)
                         {
                             byte tmp_w = 0;
@@ -885,7 +893,7 @@ namespace mtemu
                                     break;
                             }
 
-                            portExtender_.WritePort(Port, pointerType, tmp_w);
+                            portExtender_.WritePort(Addr, Port, pointerType, tmp_w);
                         }
                         else
                         {
@@ -901,10 +909,11 @@ namespace mtemu
             case FuncType.LOAD_DEVICE:
                     {
                         PortExtender.Port Port = GetPort(pointerType);
+                        int Addr = GetDeviceAddress();
                         if (Port != PortExtender.Port.PORT_UNKNOWN)
                         {
                             byte tmp_r;
-                            tmp_r = portExtender_.ReadPort(Port, pointerType);
+                            tmp_r = portExtender_.ReadPort(Addr, Port, pointerType);
                             switch (pointerType)
                             {
                                 case DataPointerType.LOW_4_BIT:
