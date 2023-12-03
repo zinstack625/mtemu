@@ -338,6 +338,18 @@ namespace mtemu
             return "";
         }
 
+        public int GetCodeByName(string name)
+        {
+            //List<Tuple<string, int>> nameAddrList = new List<Tuple<string, int>>(mapCalls_.Values);
+            List<int> nameAddrList = new List<int>(mapCalls_.Keys);
+            foreach (int key in nameAddrList)
+            {
+                Tuple<string, int> item = mapCalls_[key];
+                if (name == item.Item1) return key;
+            }
+            return -1;
+        }
+
         private void Jump_()
         {
             prevPc_ = pc_;
