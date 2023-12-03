@@ -300,7 +300,7 @@ namespace mtemu
 
                 dev.Write(in_buf, 0, in_buf.Length);
 
-                var signal = mre_.WaitOne(1000, false);
+                var signal = mre_.WaitOne(10000, false);
                 dev.DataReceived -= new SerialDataReceivedEventHandler(SerialPort_DataReceived);
                 Thread.Sleep(200);
 
@@ -343,7 +343,7 @@ namespace mtemu
             }
         }
 
-        public void WritePort(Port Port, DataPointerType pointerType, byte val)
+        public void WritePort(int Addr, Port Port, DataPointerType pointerType, byte val)
         {
             if (deviceComPort_ == null || !deviceComPort_.IsOpen)
             {
@@ -357,7 +357,7 @@ namespace mtemu
             }
 
             byte[] req_buf = new byte[CMD_REQUEST_PORT_WRITE_LENGTH];
-            byte[] data_buf = { (byte)Port, val };
+            byte[] data_buf = { (byte)(((byte)Addr << 4) | (byte)Port), val };
             byte data_size = (byte)data_buf.Length;
             object res;
 
@@ -365,7 +365,7 @@ namespace mtemu
             CmdSendRecv(ref deviceComPort_, req_buf, out res);
         }
 
-        public byte ReadPort(Port Port, DataPointerType pointerType)
+        public byte ReadPort(int Addr, Port Port, DataPointerType pointerType)
         {
             if (deviceComPort_ == null || !deviceComPort_.IsOpen)
             {
@@ -379,7 +379,7 @@ namespace mtemu
             }
 
             byte[] req_buf = new byte[CMD_REQUEST_PORT_READ_LENGTH];
-            byte[] data_buf = { (byte)Port, 0 };
+            byte[] data_buf = { (byte)(((byte)Addr << 4) | (byte)Port), 0 };
             byte data_size = (byte)data_buf.Length;
             object res;
 

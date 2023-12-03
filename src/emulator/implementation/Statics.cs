@@ -234,7 +234,7 @@ namespace mtemu
                     "F",
                     "A",
                     "B",
-                    "",
+                    "D",
                 }
             },
             {
@@ -246,7 +246,7 @@ namespace mtemu
                     "F",
                     "A",
                     "",
-                    "",
+                    "D",
                 }
             },
             {
@@ -258,7 +258,7 @@ namespace mtemu
                     "F",
                     "",
                     "B",
-                    "",
+                    "D",
                 }
             },
             {
