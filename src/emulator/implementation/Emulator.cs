@@ -345,7 +345,7 @@ namespace mtemu
             switch (Current_().GetJumpType())
             {
                 case JumpType.END:
-                    if (callIndex_ >= calls_.Count || calls_.Count <= 0)
+                    if (calls_.Count <= 0 || calls_.Count <= callIndex_ )
                     {
                         end_ = true;
                         return;
@@ -399,7 +399,7 @@ namespace mtemu
                         ++callIndex_;
                     }
 
-                    if (calls_.Count > 0 && callIndex_ < calls_.Count)
+                    if (calls_.Count > 0 && callIndex_ <= calls_.Count)
                     {
                         pc_ = GetAddrByCode(call.GetCode());
                         return;
