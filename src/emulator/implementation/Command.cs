@@ -175,31 +175,33 @@ namespace mtemu
                             switch (GetPointerType())
                             {
                                 case DataPointerType.LOW_4_BIT:
-                                    res += $"LOW(DEV_PORT)=РОН({ GetRawValue(WordType.B) })";
+                                    res += $"LOW(DEV_PORT)=РОН({ GetRawValue(WordType.B) }); ";
                                     break;
                                 case DataPointerType.HIGH_4_BIT:
-                                    res += $"HIGH(DEV_PORT)=РОН({ GetRawValue(WordType.A) })";
+                                    res += $"HIGH(DEV_PORT)=РОН({ GetRawValue(WordType.A) }); ";
                                     break;
                                 case DataPointerType.FULL_8_BIT:
-                                    res += $"DEV_PORT=(РОН({ GetRawValue(WordType.A) })<<4)+РОН({ GetRawValue(WordType.B) })";
+                                    res += $"DEV_PORT=(РОН({ GetRawValue(WordType.A) })<<4)+РОН({ GetRawValue(WordType.B) }); ";
                                     break;
                             }
+                            res += $"DEVICE_ADDR={ GetRawValue(WordType.D) }";
                             break;
 
                         case FuncType.LOAD_DEVICE:
                             switch (GetPointerType())
                             {
                                 case DataPointerType.LOW_4_BIT:
-                                    res += $"РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT)";
+                                    res += $"РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT); ";
                                     break;
                                 case DataPointerType.HIGH_4_BIT:
-                                    res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT)";
+                                    res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT); ";
                                     break;
                                 case DataPointerType.FULL_8_BIT:
-                                    res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT)";
-                                    res += $"; РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT)";
+                                    res += $"РОН({ GetRawValue(WordType.A) })=HIGH(DEV_PORT); ";
+                                    res += $"; РОН({ GetRawValue(WordType.B) })=LOW(DEV_PORT); ";
                                     break;
                             }
+                            res += $"DEVICE_ADDR={ GetRawValue(WordType.D) }";
                             break;
                     }
                     break;
