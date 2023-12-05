@@ -346,7 +346,7 @@ namespace mtemu
                 WordType.PT, new string[][] {
                     new string[] {"","0000","Память; P=P"},
                     new string[] {"","0001","Память; P=P+1"},
-                    new string[] {"","0010","Память; P=P-1"},
+                    new string[] {"","0010","Память; P=РОН"},
                     new string[] {"","1000","Регистр устр."},
                 }
             },
