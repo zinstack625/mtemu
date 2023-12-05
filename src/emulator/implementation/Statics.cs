@@ -120,11 +120,11 @@ namespace mtemu
         UNKNOWN = 255,
     }
 
-    enum IncType : byte
+    enum MemNextPoint : byte
     {
         NO = 0,
         PLUS,
-        MINUS,
+        LOAD,
         UNKNOWN = 255,
     }
 
