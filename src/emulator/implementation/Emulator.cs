@@ -25,7 +25,7 @@ namespace mtemu
         private int regQ_;
         private int[] regCommon_;
 
-        private IncType inc_;
+        private MemNextPoint inc_;
         private int mp_;
         private int[] memory_ = new int[memSize_];
 
@@ -64,7 +64,7 @@ namespace mtemu
             sp_ = 0;
             regQ_ = 0;
             regCommon_ = new int[regSize_];
-            inc_ = IncType.NO;
+            inc_ = MemNextPoint.NO;
             mp_ = 0;
             devPtr_ = -1;
 
@@ -799,7 +799,16 @@ namespace mtemu
         private void SetMemPtr_()
         {
             inc_ = Current_().GetIncType();
-            mp_ = (Current_().GetRawValue(WordType.A) << 4) + Current_().GetRawValue(WordType.B);
+            if (inc_ == MemNextPoint.LOAD)
+            {
+                int A = Current_().GetRawValue(WordType.A);
+                int B = Current_().GetRawValue(WordType.B);
+                mp_ = (GetRegValue(A) << 4) + GetRegValue(B);
+            }
+            else
+            {
+                mp_ = (Current_().GetRawValue(WordType.A) << 4) + Current_().GetRawValue(WordType.B);
+            }
         }
 
         // 4 бита адреса устройства, подключенного к порту
@@ -954,16 +963,10 @@ namespace mtemu
             }
             if (func == FuncType.STORE_MEMORY || func == FuncType.LOAD_MEMORY)
             {
-                switch (inc_)
+                if (inc_ == MemNextPoint.PLUS)
                 {
-                    case IncType.PLUS:
-                        ++mp_;
-                        mp_ %= memSize_;
-                        break;
-                    case IncType.MINUS:
-                        --mp_;
-                        mp_ %= memSize_;
-                        break;
+                    ++mp_;
+                    mp_ %= memSize_;
                 }
             }
         }

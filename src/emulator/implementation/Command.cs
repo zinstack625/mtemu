@@ -115,18 +115,16 @@ namespace mtemu
                     break;
 
                 case ViewType.MEMORY_POINTER:
-                    res += $"MemoryPtr=0x{((GetRawValue(WordType.A) << 4) + GetRawValue(WordType.B)):X2}";
-                    res += "; NewPtr=";
                     switch (GetIncType())
                     {
-                        case IncType.NO:
-                            res += "OldPtr";
+                        case MemNextPoint.NO:
+                            res += $"MemoryPtr=0x{((GetRawValue(WordType.A) << 4) + GetRawValue(WordType.B)):X2}";
                             break;
-                        case IncType.PLUS:
-                            res += "OldPtr+1";
+                        case MemNextPoint.PLUS:
+                            res += "MemoryPtr=MemoryPtr+1";
                             break;
-                        case IncType.MINUS:
-                            res += "OldPtr-1";
+                        case MemNextPoint.LOAD:
+                            res += $"MemoryPtr=0x(РОН({GetRawValue(WordType.A)}) << 4 + РОН({GetRawValue(WordType.B)}))";
                             break;
                     }
                     break;
@@ -540,14 +538,14 @@ namespace mtemu
             return ShiftType.UNKNOWN;
         }
 
-        public IncType GetIncType()
+        public MemNextPoint GetIncType()
         {
             byte value = (byte)GetRawValue(WordType.PT);
-            if (Enum.IsDefined(typeof(IncType), value))
+            if (Enum.IsDefined(typeof(MemNextPoint), value))
             {
-                return (IncType)value;
+                return (MemNextPoint)value;
             }
-            return IncType.UNKNOWN;
+            return MemNextPoint.UNKNOWN;
         }
 
         public DataPointerType GetPointerType()
