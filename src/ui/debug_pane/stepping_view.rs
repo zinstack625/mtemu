@@ -31,7 +31,7 @@ mod imp {
         #[template_child]
         pub step_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub run_button: TemplateChild<gtk::Button>,
+        pub run_button: TemplateChild<gtk::ToggleButton>,
     }
 
     #[glib::object_subclass]
