@@ -28,6 +28,7 @@
 #include <mono/metadata/class.h>
 #include <mono/metadata/image.h>
 #include <mono/metadata/object.h>
+#include <mono/metadata/mono-config.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -35,33 +36,27 @@
 
 Emulator* create_emulator() {
   Emulator* instance = malloc(sizeof(Emulator));
+  mono_config_parse (NULL);
   instance->dom = mono_jit_init("mtemu");
-  /* MonoAssembly *mtemu_emu = mono_domain_assembly_open( */
-  /*     instance.dom, PKGDATADIR "/engine.dll"); */
   MonoAssembly *mtemu_emu = mono_domain_assembly_open(
       instance->dom, PKGDATADIR "/engine.dll");
   instance->im = mono_assembly_get_image(mtemu_emu);
-  /* TODO: currently broken for whatever reason, will dig deeper later */
-  /* MonoClass *PortExtender = mono_class_from_name(im, "mtemu",
-   * "PortExtender"); */
-  /* MonoObject *port_extender = mono_object_new(dom, PortExtender); */
-  /* MonoMethodDesc* PortExtenderCtorDesc =
-   * mono_method_desc_new("mtemu.PortExtender:.ctor()", 1); */
-  /* MonoMethod* PortExtenderCtor =
-   * mono_method_desc_search_in_class(PortExtenderCtorDesc, PortExtender); */
-  /* mono_runtime_invoke(PortExtenderCtor, port_extender, NULL, NULL); */
+  MonoClass *PortExtender = mono_class_from_name(instance->im, "mtemu",
+  "PortExtender");
+  MonoObject *port_extender = mono_object_new(instance->dom, PortExtender);
+  MonoMethodDesc* PortExtenderCtorDesc =
+    mono_method_desc_new("mtemu.PortExtender:.ctor()", 1);
+  MonoMethod* PortExtenderCtor =
+  mono_method_desc_search_in_class(PortExtenderCtorDesc, PortExtender);
+  mono_runtime_invoke(PortExtenderCtor, port_extender, NULL, NULL);
   MonoClass *Emulator = mono_class_from_name(instance->im, "mtemu", "Emulator");
   instance->emul = mono_object_new(instance->dom, Emulator);
-  // MonoMethodDesc* EmulatorCtorDesc =
-  // mono_method_desc_new("mtemu.Emulator:.ctor(PortExtender)", 1);
-  MonoMethodDesc *EmulatorCtorDesc =
-      mono_method_desc_new("mtemu.Emulator:.ctor()", 1);
+  MonoMethodDesc* EmulatorCtorDesc =
+    mono_method_desc_new("mtemu.Emulator:.ctor(mtemu.PortExtender)", 1);
   MonoMethod *EmulatorCtor =
       mono_method_desc_search_in_class(EmulatorCtorDesc, Emulator);
-  /* void* args[1]; */
-  /* args[0] = &port_extender; */
-  /* mono_runtime_invoke(EmulatorCtor, emulator, args, NULL); */
-  mono_runtime_invoke(EmulatorCtor, instance->emul, NULL, NULL);
+  void* args[1] = { &port_extender };
+  mono_runtime_invoke(EmulatorCtor, instance->emul, args, NULL);
   mono_method_desc_free(EmulatorCtorDesc);
   mono_free_method(EmulatorCtor);
   return instance;
@@ -149,7 +144,7 @@ MonoObject *command_manage(Emulator *inst, Command command) {
 bool emulator_add_command(Emulator *inst, int32_t index, Command command) {
   MonoClass *emulator_class = mono_object_get_class(inst->emul);
   MonoMethodDesc *AddCommandDesc =
-      mono_method_desc_new("mtemu.Emulator:AddCommand", 1);
+      mono_method_desc_new("mtemu.Emulator:AddUserCommand", 1);
   MonoMethod *AddCommand =
       mono_method_desc_search_in_class(AddCommandDesc, emulator_class);
   void *args[2];

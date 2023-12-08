@@ -14,7 +14,7 @@
       </object>
     </child>
     <child>
-      <object class="GtkButton" id="run_button">
+      <object class="GtkToggleButton" id="run_button">
         <property name="label">Run</property>
       </object>
     </child>

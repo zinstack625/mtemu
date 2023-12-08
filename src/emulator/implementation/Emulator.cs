@@ -1344,64 +1344,7 @@ namespace mtemu
 
         private void SaveAsMtemu_(FileStream fstream)
         {
-            int callsSize = CallsCount() * (Call.CallSize());
-            int mapCallsSize = mapCalls_.Count() * (2 * sizeof(UInt16) + Call.NAME_MAX_SIZE);
-            int commandsSize = CommandsCount() * (commandSize_ + 1);
-            byte[] output = new byte[fileHeader_.Length + mapCallsSize + callsSize + commandsSize + 3 * sizeof(UInt16)];
-
-            int seek = 0;
-            for (; seek < fileHeader_.Length; ++seek)
-            {
-                output[seek] = fileHeader_[seek];
-            }
-
-            output[seek++] = (byte)(mapCalls_.Count >> 8);
-            output[seek++] = (byte)mapCalls_.Count;
-
-            foreach (KeyValuePair<int, Tuple<string, int>> pair in mapCalls_)
-            {
-                output[seek++] = (byte)(pair.Key >> 8);
-                output[seek++] = (byte)pair.Key;
-                byte[] name = Encoding.UTF8.GetBytes(pair.Value.Item1);
-                for (int c = 0; c < Call.NAME_MAX_SIZE; ++c)
-                {
-                    output[seek++] = (byte)(c < name.Length ? name[c] : 0);
-                }
-                output[seek++] = (byte)(pair.Value.Item2 >> 8);
-                output[seek++] = (byte)pair.Value.Item2;
-            }
-
-
-
-            Call[] callsArr = calls_.ToArray();
-            output[seek++] = (byte)(calls_.Count >> 8);
-            output[seek++] = (byte)calls_.Count;
-
-            for (int i = 0; i < callsArr.Length; ++i)
-            {
-                output[seek++] = (byte)(callsArr[i].GetCode() >> 8);
-                output[seek++] = (byte)callsArr[i].GetCode();
-                output[seek++] = (byte)(callsArr[i].GetArg0() >> 8);
-                output[seek++] = (byte)callsArr[i].GetArg0();
-                output[seek++] = (byte)(callsArr[i].GetArg1() >> 8);
-                output[seek++] = (byte)callsArr[i].GetArg1();
-                output[seek++] = (byte)(callsArr[i].GetAltCommandAddress() ? 1 : 0);
-                output[seek++] = (byte)callsArr[i].GetFlag();
-            }
-
-            Command[] commandsArr = commands_.ToArray();
-            output[seek++] = (byte)(commands_.Count >> 8);
-            output[seek++] = (byte)commands_.Count;
-
-            for (int i = 0; i < commandsArr.Length; ++i)
-            {
-                output[seek++] = (byte)(commandsArr[i].isOffset ? 1 : 0);
-                for (int j = 0; j < commandSize_; ++j)
-                {
-                    output[seek++] = (byte)((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
-                }
-            }
-
+            byte[] output = ExportRaw();
             fstream.Write(output, 0, output.Length);
             fstream.SetLength(fstream.Position);
         }
@@ -1497,39 +1440,60 @@ namespace mtemu
 
         public byte[] ExportRaw()
         {
-            int callsSize = CallsCount() * (sizeof(UInt16) + Call.COMMENT_MAX_SIZE);
+            int callsSize = CallsCount() * Call.CallSize();
+            int mapCallsSize = mapCalls_.Count() * (2 * sizeof(UInt16) + Call.NAME_MAX_SIZE);
             int commandsSize = CommandsCount() * (commandSize_ + 1);
-            byte[] output = new byte[fileHeader_.Length + callsSize + commandsSize + 2 * sizeof(UInt16)];
+            byte[] output = new byte[fileHeader_.Length + mapCallsSize + callsSize + commandsSize + 3 * sizeof(UInt16)];
 
             int seek = 0;
             for (; seek < fileHeader_.Length; ++seek) {
                 output[seek] = fileHeader_[seek];
             }
 
-            Call[] callsArr = calls_.ToArray();
             output[seek++] = (byte) (calls_.Count >> 8);
             output[seek++] = (byte) calls_.Count;
 
-            for (int i = 0; i < callsArr.Length; ++i) {
-                output[seek++] = (byte) (callsArr[i].GetAddress() >> 8);
-                output[seek++] = (byte) callsArr[i].GetAddress();
-
-                byte[] comment = Encoding.UTF8.GetBytes(callsArr[i].GetComment());
-                for (int c = 0; c < Call.COMMENT_MAX_SIZE; ++c) {
-                    output[seek++] = (byte) (c < comment.Length ? comment[c] : 0);
+            foreach (KeyValuePair<int, Tuple<string, int>> pair in mapCalls_) {
+                output[seek++] = (byte)(pair.Key >> 8);
+                output[seek++] = (byte)pair.Key;
+                byte[] name = Encoding.UTF8.GetBytes(pair.Value.Item1);
+                for (int c = 0; c < Call.NAME_MAX_SIZE; ++c)
+                {
+                    output[seek++] = (byte)(c < name.Length ? name[c] : 0);
                 }
+                output[seek++] = (byte)(pair.Value.Item2 >> 8);
+                output[seek++] = (byte)pair.Value.Item2;
+            }
+
+            Call[] callsArr = calls_.ToArray();
+            output[seek++] = (byte)(calls_.Count >> 8);
+            output[seek++] = (byte)calls_.Count;
+
+            for (int i = 0; i < callsArr.Length; ++i)
+            {
+                output[seek++] = (byte)(callsArr[i].GetCode() >> 8);
+                output[seek++] = (byte)callsArr[i].GetCode();
+                output[seek++] = (byte)(callsArr[i].GetArg0() >> 8);
+                output[seek++] = (byte)callsArr[i].GetArg0();
+                output[seek++] = (byte)(callsArr[i].GetArg1() >> 8);
+                output[seek++] = (byte)callsArr[i].GetArg1();
+                output[seek++] = (byte)(callsArr[i].GetAltCommandAddress() ? 1 : 0);
+                output[seek++] = (byte)callsArr[i].GetFlag();
             }
 
             Command[] commandsArr = commands_.ToArray();
-            output[seek++] = (byte) (commands_.Count >> 8);
-            output[seek++] = (byte) commands_.Count;
+            output[seek++] = (byte)(commands_.Count >> 8);
+            output[seek++] = (byte)commands_.Count;
 
-            for (int i = 0; i < commandsArr.Length; ++i) {
-                output[seek++] = (byte) (commandsArr[i].isOffset ? 1 : 0);
-                for (int j = 0; j < commandSize_; ++j) {
-                    output[seek++] = (byte) ((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
+            for (int i = 0; i < commandsArr.Length; ++i)
+            {
+                output[seek++] = (byte)(commandsArr[i].isOffset ? 1 : 0);
+                for (int j = 0; j < commandSize_; ++j)
+                {
+                    output[seek++] = (byte)((commandsArr[i][2 * j] << 4) + commandsArr[i][2 * j + 1]);
                 }
             }
+
             return output;
         }
     }

@@ -405,12 +405,11 @@ mod imp {
                 app_clone.emit_by_name::<()>("command-changed", &[&command]);
             });
             let app_clone = app.clone();
-            button_view.run_button.connect_clicked(move |button: &gtk::Button| {
+            button_view.run_button.connect_toggled(move |button: &gtk::ToggleButton| {
                 let context = MainContext::default();
                 let button_clone = button.clone();
                 context.spawn_local(glib::clone!(@weak app_clone => async move {
-                    button_clone.set_sensitive(false);
-                    for _ in 0..200 {
+                    while button_clone.is_active() {
                         let emul = app_clone.get_emulator();
                         let prev_cmd = {
                             let Some(ref mut emul) = *emul.borrow_mut() else { return };
@@ -422,7 +421,6 @@ mod imp {
                             }
                             if cmd_count == 0 || pc >= cmd_count {
                                 // TODO: emit rom end
-                                button_clone.set_sensitive(true);
                                 return;
                             }
                             let prev_cmd = emul.get_command(pc);
@@ -460,7 +458,6 @@ mod imp {
                             let Some(ref emul) = *emul.borrow() else { todo!() };
                             if emul.commands_count() <= state.0.program_counter {
                                 // TODO: emit rom end
-                                button_clone.set_sensitive(true);
                                 return;
                             }
                             Rc::new(emul.get_command(state.0.program_counter))
@@ -469,7 +466,6 @@ mod imp {
 
                         glib::timeout_future(std::time::Duration::from_millis(20)).await;
                     }
-                    button_clone.set_sensitive(true);
                 }));
             });
         }
