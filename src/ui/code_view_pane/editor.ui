@@ -45,28 +45,11 @@
                 <property name="orientation">vertical</property>
                 <child>
                   <object class="GtkLabel" id="load_type_label">
-                    <property name="label">M1|I6-9</property>
+                    <property name="label">M1|I6-8</property>
                   </object>
                 </child>
                 <child>
                   <object class="GtkEntry" id="load_type">
-                    <property name="width-chars">4</property>
-                    <property name="max-width-chars">4</property>
-                    <property name="max-length">4</property>
-                  </object>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkBox" id="instr_type_box">
-                <property name="orientation">vertical</property>
-                <child>
-                  <object class="GtkLabel" id="instr_type_label">
-                    <property name="label">C0|I3-5</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="instr_type">
                     <property name="width-chars">4</property>
                     <property name="max-width-chars">4</property>
                     <property name="max-length">4</property>
@@ -84,6 +67,23 @@
                 </child>
                 <child>
                   <object class="GtkEntry" id="op_type">
+                    <property name="width-chars">4</property>
+                    <property name="max-width-chars">4</property>
+                    <property name="max-length">4</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox" id="instr_type_box">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkLabel" id="instr_type_label">
+                    <property name="label">C0|I3-5</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="instr_type">
                     <property name="width-chars">4</property>
                     <property name="max-width-chars">4</property>
                     <property name="max-length">4</property>

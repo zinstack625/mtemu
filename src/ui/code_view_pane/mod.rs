@@ -163,7 +163,7 @@ mod imp {
                     item.child()
                         .and_downcast::<gtk::Label>()
                         .unwrap()
-                        .set_label(&model.property::<i32>("addr").to_string());
+                        .set_label(&format!("0x{:0>3X}", model.addr()));
                 });
                 factory
             }));
