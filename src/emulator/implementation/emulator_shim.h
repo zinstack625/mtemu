@@ -20,6 +20,7 @@
 #ifndef EMULATOR_SHIM_H_
 #define EMULATOR_SHIM_H_
 
+#include "mono/metadata/object-forward.h"
 #include <mono/metadata/appdomain.h>
 #include <mono/metadata/debug-helpers.h>
 #include <stdbool.h>
@@ -42,6 +43,60 @@ typedef struct {
   MonoDomain *dom;
   MonoImage *im;
   MonoObject *emul;
+  struct {
+    MonoMethod* EmulatorCtor;
+    MonoMethod* PortExtenderCtor;
+    MonoMethod* Reset;
+    MonoMethod* GetCommand;
+    MonoMethod* AddCommand;
+    MonoMethod* UpdateCommand;
+    MonoMethod* LastCommand;
+    MonoMethod* RemoveCommand;
+    MonoMethod* CommandCount;
+    MonoMethod* ExecutedCommand;
+    MonoMethod* ExecOne;
+    MonoMethod* ExecOneCall;
+    MonoMethod* ExecAll;
+    MonoMethod* GetNextIndex;
+    MonoMethod* GetPrevIndex;
+    MonoMethod* GetCallIndex;
+    MonoMethod* GetPC;
+    MonoMethod* SetPC;
+    MonoMethod* GetSP;
+    MonoMethod* SetSP;
+    MonoMethod* GetStackValue;
+    MonoMethod* GetStackLen;
+    MonoMethod* GetMP;
+    MonoMethod* GetPort;
+    MonoMethod* GetMemValue;
+    MonoMethod* GetMemLength;
+    MonoMethod* GetMem;
+    MonoMethod* GetRegQ;
+    MonoMethod* GetRegValue;
+    MonoMethod* GetF;
+    MonoMethod* GetY;
+    MonoMethod* GetPrevRegQ;
+    MonoMethod* GetPrevRegA;
+    MonoMethod* GetPrevRegB;
+    MonoMethod* GetR;
+    MonoMethod* GetS;
+    MonoMethod* GetZ;
+    MonoMethod* GetF3;
+    MonoMethod* GetC4;
+    MonoMethod* GetOVR;
+    MonoMethod* GetG;
+    MonoMethod* GetP;
+    MonoMethod* AddCall;
+    MonoMethod* GetCall;
+    MonoMethod* UpdateCall;
+    MonoMethod* RemoveCall;
+    MonoMethod* CallsCount;
+    MonoMethod* LastCall;
+    MonoMethod* OpenRaw;
+    MonoMethod* ExportRaw;
+    MonoMethod* GetName;
+    MonoMethod* GetJumpName;
+  } methods;
 } Emulator;
 
 typedef enum {
