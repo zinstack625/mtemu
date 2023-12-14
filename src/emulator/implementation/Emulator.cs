@@ -1450,8 +1450,8 @@ namespace mtemu
                 output[seek] = fileHeader_[seek];
             }
 
-            output[seek++] = (byte) (calls_.Count >> 8);
-            output[seek++] = (byte) calls_.Count;
+            output[seek++] = (byte) (mapCalls_.Count >> 8);
+            output[seek++] = (byte) mapCalls_.Count;
 
             foreach (KeyValuePair<int, Tuple<string, int>> pair in mapCalls_) {
                 output[seek++] = (byte)(pair.Key >> 8);
