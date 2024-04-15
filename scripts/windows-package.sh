@@ -9,9 +9,9 @@
 
 PREFIX="Program Files (x86)/MTemu"
 
-meson setup --prefix "C:/$PREFIX" --buildtype release
+meson setup --prefix "C:/$PREFIX" --buildtype release build
 meson install -C build --destdir dest || true
-cp build/src/mtemu.exe build/dest/$PREFIX/
+cp build/src/mtemu.exe "build/dest/$PREFIX/"
 ldd build/src/mtemu.exe | grep "\/clang64.*\.dll" | awk '{print $3;}' | xargs -I{} cp {} "build/dest/$PREFIX/"
 cp "build/dest/$PREFIX/bin/libengine.dll" "build/dest/$PREFIX"
 rm -r "build/dest/$PREFIX/bin" "build/dest/$PREFIX/lib"
