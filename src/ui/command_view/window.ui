@@ -50,52 +50,20 @@
                         <property name="header-menu">command_list_menu</property>
                       </object>
                     </child>
-                    <child>
-                      <object class="GtkColumnViewColumn" id="command_arg_2">
-                        <property name="title">Arg 2</property>
-                        <property name="header-menu">command_list_menu</property>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
             </child>
             <child>
-              <object class="GtkGrid">
-                <property name="row-spacing">5</property>
-                <property name="column-spacing">5</property>
+              <object class="GtkBox">
+                <property name="spacing">5</property>
+                <property name="orientation">horizontal</property>
                 <property name="margin-start">5</property>
                 <property name="margin-end">5</property>
                 <child>
                   <object class="GtkBox">
                     <property name="orientation">horizontal</property>
                     <property name="spacing">5</property>
-                    <layout>
-                      <property name="row">0</property>
-                      <property name="column">0</property>
-                    </layout>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Name</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="name-entry">
-                        <property name="width-chars">6</property>
-                        <property name="max-length">4</property>
-                        <property name="hexpand">true</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">horizontal</property>
-                    <property name="spacing">5</property>
-                    <layout>
-                      <property name="row">0</property>
-                      <property name="column">1</property>
-                    </layout>
                     <child>
                       <object class="GtkLabel">
                         <property name="label">Arg0</property>
@@ -114,10 +82,6 @@
                   <object class="GtkBox">
                     <property name="orientation">horizontal</property>
                     <property name="spacing">5</property>
-                    <layout>
-                      <property name="row">1</property>
-                      <property name="column">0</property>
-                    </layout>
                     <child>
                       <object class="GtkLabel">
                         <property name="label">Arg1</property>
@@ -125,28 +89,6 @@
                     </child>
                     <child>
                       <object class="GtkEntry" id="arg1_entry">
-                        <property name="width-chars">4</property>
-                        <property name="max-length">8</property>
-                        <property name="hexpand">true</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">horizontal</property>
-                    <property name="spacing">5</property>
-                    <layout>
-                      <property name="row">1</property>
-                      <property name="column">1</property>
-                    </layout>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Arg2</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="arg2_entry">
                         <property name="width-chars">4</property>
                         <property name="max-length">8</property>
                         <property name="hexpand">true</property>
@@ -163,28 +105,18 @@
                 <property name="margin-start">5</property>
                 <property name="margin-end">5</property>
                 <child>
-                  <object class="GtkButton">
+                  <object class="GtkButton" id="add_button">
                     <property name="label">Add</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton">
+                  <object class="GtkButton" id="delete_button">
                     <property name="label">Delete</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton">
+                  <object class="GtkButton" id="update_button">
                     <property name="label">Update</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkButton">
-                    <property name="label">Step</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkButton">
-                    <property name="label">Run</property>
                   </object>
                 </child>
               </object>
@@ -209,19 +141,25 @@
                 <property name="hscrollbar-policy">2</property>
                 <property name="propagate-natural-width">true</property>
                 <child>
-                  <object class="GtkColumnView">
+                  <object class="GtkColumnView" id="library_table">
                     <property name="hexpand">true</property>
                     <property name="vexpand">true</property>
                     <property name="reorderable">false</property>
                     <child>
-                      <object class="GtkColumnViewColumn">
+                      <object class="GtkColumnViewColumn" id="library_ca">
                         <property name="title">CA</property>
                         <property name="header-menu">usercommand_list_menu</property>
                       </object>
                     </child>
                     <child>
-                      <object class="GtkColumnViewColumn">
+                      <object class="GtkColumnViewColumn" id="library_name">
                         <property name="title">Name</property>
+                        <property name="header-menu">usercommand_list_menu</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkColumnViewColumn" id="library_addr">
+                        <property name="title">Addr</property>
                         <property name="header-menu">usercommand_list_menu</property>
                       </object>
                     </child>
@@ -235,15 +173,87 @@
                 <property name="spacing">5</property>
                 <property name="vexpand">false</property>
                 <child>
-                  <object class="GtkButton">
+                  <object class="GtkLabel">
+                    <property name="label">Name</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="libname_entry">
+                    <property name="width-chars">4</property>
+                    <property name="max-length">8</property>
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">5</property>
+                <property name="vexpand">false</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">Address</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="libaddr_entry">
+                    <property name="width-chars">4</property>
+                    <property name="max-length">8</property>
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <property name="spacing">5</property>
+                <property name="vexpand">false</property>
+                <child>
+                  <object class="GtkButton" id="lib_add_button">
                     <property name="label">Add</property>
                   </object>
                 </child>
                 <child>
-                  <object class="GtkButton">
+                  <object class="GtkButton" id="lib_delete_button">
                     <property name="label">Delete</property>
                   </object>
                 </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="orientation">vertical</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
+            <property name="vexpand">false</property>
+            <property name="margin-end">5</property>
+            <child>
+              <object class="GtkWindowControls">
+                <property name="side">end</property>
+                <property name="halign">end</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="step_button">
+                <property name="label">Step</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkToggleButton" id="run_button">
+                <property name="label">Run</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="reset_button">
+                <property name="label">Reset</property>
               </object>
             </child>
           </object>

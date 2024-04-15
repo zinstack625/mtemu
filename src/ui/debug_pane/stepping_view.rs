@@ -29,11 +29,11 @@ mod imp {
     #[template(resource = "/org/bmstu/mtemu/ui/debug_pane/stepping_view.ui")]
     pub struct SteppingView {
         #[template_child]
-        pub reset_button: TemplateChild<gtk::Button>,
+        reset_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub step_button: TemplateChild<gtk::Button>,
+        step_button: TemplateChild<gtk::Button>,
         #[template_child]
-        pub run_button: TemplateChild<gtk::ToggleButton>,
+        run_button: TemplateChild<gtk::ToggleButton>,
     }
 
     #[glib::object_subclass]

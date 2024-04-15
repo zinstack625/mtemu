@@ -328,6 +328,11 @@ mod imp {
             let Some(selection) = self.op_type.model() else { return };
             selection.select_item((new_command.args.get() & 0b0111) as u32, true);
             self.m0_select.set_active(new_command.args.get() & 0b1000 != 0);
+            if self.m0_select.is_active() {
+                self.load_type_name.set_factory(Some(&col_static_factory!(LoadTypeEntry, get_load_m0)));
+            } else {
+                self.load_type_name.set_factory(Some(&col_static_factory!(LoadTypeEntry, get_load)));
+            }
             let Some(selection) = self.load_type.model() else { return };
             selection.select_item((new_command.load.get() & 0b0111) as u32, true);
             self.m1_select.set_active(new_command.load.get() & 0b1000 != 0);
@@ -417,7 +422,8 @@ mod imp {
                 Some(&gtk::SingleSelection::new(
                     Some(parse_res!(LoadTypeEntry, from_resource,
                         ("ca", set_ca),
-                        ("load", set_load)
+                        ("load", set_load),
+                        ("load_m0", set_load_m0)
                     ))
                 ))
             );

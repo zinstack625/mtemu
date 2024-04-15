@@ -40,11 +40,11 @@ mod imp {
     pub struct DebugPane {
         // Template widgets
         #[template_child]
-        pub stepping_view: TemplateChild<SteppingView>,
+        stepping_view: TemplateChild<SteppingView>,
         #[template_child]
-        pub output_view: TemplateChild<OutputView>,
+        output_view: TemplateChild<OutputView>,
         #[template_child]
-        pub register_view: TemplateChild<RegisterView>,
+        register_view: TemplateChild<RegisterView>,
     }
 
     #[glib::object_subclass]

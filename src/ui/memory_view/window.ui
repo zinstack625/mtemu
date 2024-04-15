@@ -8,32 +8,42 @@
     <property name="hexpand">true</property>
     <property name="resizable">false</property>
     <property name="content">
-      <object class="GtkScrolledWindow">
-        <property name="hexpand">true</property>
-        <property name="hscrollbar-policy">2</property>
-        <property name="vexpand">true</property>
-        <property name="propagate-natural-width">true</property>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
         <child>
-          <object class="GtkColumnView" id="memory_list">
+          <object class="AdwHeaderBar" id="header_bar">
+            <property name="show-title">false</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="hexpand">true</property>
+            <property name="hscrollbar-policy">2</property>
             <property name="vexpand">true</property>
-            <property name="reorderable">false</property>
-            <property name="show-row-separators">true</property>
+            <property name="propagate-natural-width">true</property>
             <child>
-              <object class="GtkColumnViewColumn" id="memory_addr">
-                <property name="title">Address</property>
-                <property name="header-menu">memory_list_menu</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkColumnViewColumn" id="memory_bin">
-                <property name="title">Bin</property>
-                <property name="header-menu">memory_list_menu</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkColumnViewColumn" id="memory_hex">
-                <property name="title">Hex</property>
-                <property name="header-menu">memory_list_menu</property>
+              <object class="GtkColumnView" id="memory_list">
+                <property name="vexpand">true</property>
+                <property name="reorderable">false</property>
+                <property name="show-row-separators">true</property>
+                <child>
+                  <object class="GtkColumnViewColumn" id="memory_addr">
+                    <property name="title">Address</property>
+                    <property name="header-menu">memory_list_menu</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkColumnViewColumn" id="memory_bin">
+                    <property name="title">Bin</property>
+                    <property name="header-menu">memory_list_menu</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkColumnViewColumn" id="memory_hex">
+                    <property name="title">Hex</property>
+                    <property name="header-menu">memory_list_menu</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>

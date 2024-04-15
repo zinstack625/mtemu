@@ -23,6 +23,7 @@
 #include "mono/metadata/loader.h"
 #include "mono/metadata/object-forward.h"
 #include "mono/utils/mono-publib.h"
+#include <stddef.h>
 #include <mono/jit/jit.h>
 #include <mono/metadata/appdomain.h>
 #include <mono/metadata/assembly.h>
@@ -189,35 +190,35 @@ void init_emul_methods(Emulator* in, MonoClass* emulator_class) {
   in->methods.GetOVR = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:GetG()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:GetG", 1);
   in->methods.GetG = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:GetP()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:GetP", 1);
   in->methods.GetP = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:AddCall()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:AddCall", 1);
   in->methods.AddCall = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:GetCall()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:GetCall", 1);
   in->methods.GetCall = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:UpdateCall()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:UpdateCall", 1);
   in->methods.UpdateCall = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:RemoveCall()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:RemoveCall", 1);
   in->methods.RemoveCall = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:CallsCount()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:CallsCount", 1);
   in->methods.CallsCount = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:LastCall()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:LastCall", 1);
   in->methods.LastCall = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
@@ -225,8 +226,40 @@ void init_emul_methods(Emulator* in, MonoClass* emulator_class) {
   in->methods.OpenRaw = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 
-  desc = mono_method_desc_new("mtemu.Emulator:ExportRaw()", 1);
+  desc = mono_method_desc_new("mtemu.Emulator:ExportRaw", 1);
   in->methods.ExportRaw = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:AddMapCall", 1);
+  in->methods.AddMapCall = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:RemoveMapCall", 1);
+  in->methods.RemoveMapCall = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:UpdateMapCall", 1);
+  in->methods.UpdateMapCall = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:GetMapCallName", 1);
+  in->methods.GetMapCallName = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:GetMapCallAddr", 1);
+  in->methods.GetMapCallAddr = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:GetMapCallsCodes", 1);
+  in->methods.GetMapCallCodes = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:InitLibrary", 1);
+  in->methods.InitLibrary = mono_method_desc_search_in_class(desc, emulator_class);
+  mono_method_desc_free(desc);
+
+  desc = mono_method_desc_new("mtemu.Emulator:Clone", 1);
+  in->methods.Clone = mono_method_desc_search_in_class(desc, emulator_class);
   mono_method_desc_free(desc);
 }
 
@@ -270,10 +303,31 @@ Emulator* create_emulator() {
 
   MonoClass *command = mono_class_from_name(instance->im, "mtemu", "Command");
   init_command_methods(instance, command);
+  instance->is_clone = false;
   return instance;
 }
 
+Emulator* clone_emulator(const Emulator *inst) {
+  Emulator* clone = malloc(sizeof(Emulator));
+  clone->dom = inst->dom;
+  clone->methods = inst->methods;
+  clone->im = inst->im;
+  clone->emul = mono_runtime_invoke(inst->methods.Clone, inst->emul, NULL, NULL);
+  clone->is_clone = true;
+  return clone;
+}
+
+void emulator_swap(Emulator *lhs, Emulator *rhs) {
+  MonoObject *temp = lhs->emul;
+  lhs->emul = rhs->emul;
+  rhs->emul = temp;
+}
+
 void destroy_emulator(Emulator* inst) {
+  if (inst->is_clone) {
+    free(inst);
+    return;
+  }
   mono_free_method(inst->methods.EmulatorCtor);
   mono_free_method(inst->methods.PortExtenderCtor);
   mono_free_method(inst->methods.Reset);
@@ -326,6 +380,14 @@ void destroy_emulator(Emulator* inst) {
   mono_free_method(inst->methods.ExportRaw);
   mono_free_method(inst->methods.GetName);
   mono_free_method(inst->methods.GetJumpName);
+  mono_free_method(inst->methods.AddMapCall);
+  mono_free_method(inst->methods.RemoveMapCall);
+  mono_free_method(inst->methods.UpdateMapCall);
+  mono_free_method(inst->methods.GetMapCallName);
+  mono_free_method(inst->methods.GetMapCallAddr);
+  mono_free_method(inst->methods.GetMapCallCodes);
+  mono_free_method(inst->methods.InitLibrary);
+  mono_free_method(inst->methods.Clone);
   mono_jit_cleanup(inst->dom);
   free(inst);
 }
@@ -608,32 +670,36 @@ int32_t emulator_get_p(Emulator *inst) {
 MonoObject *call_manage(Emulator *inst, Call call) {
   MonoClass *CallClass = mono_class_from_name_case(inst->im, "mtemu", "Call");
   MonoObject *CallObject = mono_object_new(inst->dom, CallClass);
-  MonoClassField *address_ =
-      mono_class_get_field_from_name(CallClass, "isOffset");
-  MonoClassField *comment_ =
-      mono_class_get_field_from_name(CallClass, "number_");
-  mono_field_set_value(CallObject, address_, &call.address_);
-  mono_field_set_value(CallObject, comment_,
-                       mono_string_new_wrapper(call.comment_));
+  MonoClassField *code_ =
+      mono_class_get_field_from_name(CallClass, "code_");
+  MonoClassField *arg0_ =
+      mono_class_get_field_from_name(CallClass, "arg0_");
+  MonoClassField* arg1_ =
+      mono_class_get_field_from_name(CallClass, "arg1_");
+  mono_field_set_value(CallObject, code_, &call.code_);
+  mono_field_set_value(CallObject, arg0_, &call.arg0_);
+  mono_field_set_value(CallObject, arg1_, &call.arg1_);
   return CallObject;
 }
 
-Call call_unmanage(Emulator *inst, MonoObject *cmd_obj) {
+Call call_unmanage(Emulator * inst, MonoObject *cmd_obj) {
   MonoClass *CallClass = mono_object_get_class(cmd_obj);
-  MonoClassField *address_ =
-      mono_class_get_field_from_name(CallClass, "address_");
-  MonoClassField *comment_ =
-      mono_class_get_field_from_name(CallClass, "comment_");
+  MonoClassField *code_ =
+      mono_class_get_field_from_name(CallClass, "code_");
+  MonoClassField *arg0_ =
+      mono_class_get_field_from_name(CallClass, "arg0_");
+  MonoClassField *arg1_ =
+      mono_class_get_field_from_name(CallClass, "arg1_");
   Call call;
-  mono_field_get_value(cmd_obj, address_, &call.address_);
-  call.comment_ = mono_string_to_utf8(
-      (MonoString *)mono_field_get_value_object(inst->dom, comment_, cmd_obj));
+  mono_field_get_value(cmd_obj, code_, &call.code_);
+  mono_field_get_value(cmd_obj, arg0_, &call.arg0_);
+  mono_field_get_value(cmd_obj, arg1_, &call.arg1_);
   return call;
 }
 
 void emulator_add_call(Emulator *inst, int32_t index, Call call) {
-  void *args[2] = {&index, call_manage(inst, call)};
-  mono_runtime_invoke(inst->methods.AddCall, inst->emul, args, NULL);
+  void *args[4] = {&index, &call.code_, &call.arg0_, &call.arg1_};
+  mono_object_unbox(mono_runtime_invoke(inst->methods.AddCall, inst->emul, args, NULL));
 }
 
 Call emulator_get_call(Emulator *inst, int32_t index) {
@@ -642,7 +708,7 @@ Call emulator_get_call(Emulator *inst, int32_t index) {
 }
 
 void emulator_update_call(Emulator *inst, int32_t index, Call call) {
-  void *args[2] = {&index, call_manage(inst, call)};
+  void *args[4] = {&index, &call.code_, &call.arg0_, &call.arg1_};
   mono_runtime_invoke(inst->methods.UpdateCall, inst->emul, args, NULL);
 }
 
@@ -654,6 +720,48 @@ void emulator_remove_call(Emulator *inst, int32_t index) {
 int32_t emulator_calls_count(Emulator *inst) {
   return *(int32_t *)mono_object_unbox(
       mono_runtime_invoke(inst->methods.CallsCount, inst->emul, NULL, NULL));
+}
+
+bool emulator_add_map_call(Emulator *inst, int32_t code, const char* name, int32_t addr) {
+  MonoString* name_ = mono_string_new(inst->dom, name);
+  void *args[3] = {&code, name_, &addr};
+  return *(bool*)mono_object_unbox(
+    mono_runtime_invoke(inst->methods.AddMapCall, inst->emul, args, NULL));
+}
+
+bool emulator_remove_map_call(Emulator *inst, int32_t code) {
+  void *args[1] = {&code};
+  return *(bool*)mono_object_unbox(
+    mono_runtime_invoke(inst->methods.RemoveMapCall, inst->emul, args, NULL));
+}
+
+bool emulator_update_map_call(Emulator *inst, int32_t code, const char* name, int32_t addr) {
+  MonoString* name_ = mono_string_new(inst->dom, name);
+  void *args[3] = {&code, name_, &addr};
+  return *(bool*)mono_object_unbox(
+    mono_runtime_invoke(inst->methods.UpdateMapCall, inst->emul, args, NULL));
+}
+
+int32_t* emulator_get_map_calls_codes(Emulator* inst, uint64_t* cnt) {
+  MonoArray* codes = (MonoArray*)mono_runtime_invoke(inst->methods.GetMapCallCodes, inst->emul, NULL, NULL);
+  *cnt = mono_array_length(codes);
+  int32_t* local_codes = malloc(*cnt * sizeof(int32_t));
+  for (uint64_t i = 0; i < *cnt; ++i) {
+    local_codes[i] = mono_array_get(codes, int32_t, i);
+  }
+  return local_codes;
+}
+
+char* emulator_get_map_call_name(Emulator* inst, int32_t code) {
+  void* args[1] = {&code};
+  MonoObject* exception;
+  MonoString * result = (MonoString*)mono_runtime_invoke(inst->methods.GetMapCallName, inst->emul, args, &exception);
+  return mono_string_to_utf8(result);
+}
+
+int32_t emulator_get_map_call_addr(Emulator* inst, int32_t code) {
+  void* args[1] = {&code};
+  return *(int32_t*)mono_object_unbox(mono_runtime_invoke(inst->methods.GetMapCallAddr, inst->emul, args, NULL));
 }
 
 Call emulator_last_call(Emulator *inst) {
@@ -682,6 +790,10 @@ void emulator_export_raw(Emulator *inst, uint8_t **bytes, size_t *bytes_cnt) {
     bytes_local[i] = mono_array_get(managed_bytes, uint8_t, i);
   }
   *bytes = bytes_local;
+}
+
+void emulator_init_library(Emulator *inst) {
+  mono_runtime_invoke(inst->methods.InitLibrary, inst->emul, NULL, NULL);
 }
 
 char *command_get_name(Emulator *inst, Command cmd) {

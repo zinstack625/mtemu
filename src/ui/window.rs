@@ -25,6 +25,8 @@ use super::debug_pane::DebugPane;
 use super::line_builder_pane::LineBuilderPane;
 
 mod imp {
+    use gtk::{glib::once_cell::sync::Lazy, prelude::ObjectExt};
+
     use super::*;
 
     #[derive(Debug, Default, gtk::CompositeTemplate)]
@@ -40,6 +42,8 @@ mod imp {
         pub debug_pane: TemplateChild<DebugPane>,
         #[template_child]
         pub line_builder_pane: TemplateChild<LineBuilderPane>,
+        #[template_child]
+        pub primary_menu_button: TemplateChild<gtk::MenuButton>,
     }
 
     #[glib::object_subclass]
@@ -58,14 +62,31 @@ mod imp {
     }
 
     impl ObjectImpl for MtemuWindow {
+        fn signals() -> &'static [glib::subclass::Signal] {
+            static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
+                vec![glib::subclass::Signal::builder("library-inited")
+                     .build(),
+                ]
+            });
+            SIGNALS.as_ref()
+        }
         fn constructed(&self) {
             self.parent_constructed();
+            self.obj().connect_closure("library-inited", false, glib::closure_local!(move |window: super::MtemuWindow| {
+                window.disable_libinit_button();
+            }));
         }
     }
     impl WidgetImpl for MtemuWindow {}
     impl WindowImpl for MtemuWindow {}
     impl ApplicationWindowImpl for MtemuWindow {}
     impl AdwApplicationWindowImpl for MtemuWindow {}
+    impl MtemuWindow {
+        pub fn disable_libinit_button(&self) {
+            // let Some(model) = self.primary_menu.menu_model() else { return };
+            // model.
+        }
+    }
 }
 
 glib::wrapper! {
@@ -75,6 +96,9 @@ glib::wrapper! {
 }
 
 impl MtemuWindow {
+    pub fn disable_libinit_button(&self) {
+        self.imp().disable_libinit_button();
+    }
     pub fn new<P: glib::IsA<gtk::Application>>(application: &P) -> Self {
         glib::Object::builder()
             .property("application", application)

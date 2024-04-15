@@ -80,6 +80,7 @@ mod imp {
     pub struct LoadTypeEntry {
         pub ca: Cell<String>,
         pub load: Cell<String>,
+        pub load_m0: Cell<String>,
     }
 
     wrap_obj_subclass!(JumpEntry, super::JumpEntry, "JumpEntry");
@@ -166,4 +167,5 @@ impl LoadTypeEntry {
     new_obj!();
     get_set_str!(ca, imp::LoadTypeEntry);
     get_set_str!(load, imp::LoadTypeEntry);
+    get_set_str!(load_m0, imp::LoadTypeEntry);
 }

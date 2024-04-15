@@ -35,11 +35,13 @@ typedef struct {
 } Command;
 
 typedef struct {
-  int32_t address_;
-  char *comment_;
+  int32_t code_;
+  int32_t arg0_;
+  int32_t arg1_;
 } Call;
 
 typedef struct {
+  bool is_clone;
   MonoDomain *dom;
   MonoImage *im;
   MonoObject *emul;
@@ -91,11 +93,19 @@ typedef struct {
     MonoMethod* UpdateCall;
     MonoMethod* RemoveCall;
     MonoMethod* CallsCount;
+    MonoMethod* AddMapCall;
+    MonoMethod* RemoveMapCall;
+    MonoMethod* UpdateMapCall;
+    MonoMethod* GetMapCallName;
+    MonoMethod* GetMapCallAddr;
+    MonoMethod* GetMapCallCodes;
     MonoMethod* LastCall;
     MonoMethod* OpenRaw;
     MonoMethod* ExportRaw;
     MonoMethod* GetName;
     MonoMethod* GetJumpName;
+    MonoMethod* InitLibrary;
+    MonoMethod* Clone;
   } methods;
 } Emulator;
 
@@ -108,6 +118,7 @@ typedef enum {
 } ResultCode;
 
 Emulator *create_emulator();
+Emulator *clone_emulator(const Emulator *);
 void destroy_emulator(Emulator *);
 void emulator_reset(Emulator *);
 Command emulator_get_command(Emulator *, int32_t);
@@ -154,7 +165,14 @@ Call emulator_get_call(Emulator *, int32_t);
 void emulator_update_call(Emulator *, int32_t, Call);
 void emulator_remove_call(Emulator *, int32_t);
 int32_t emulator_calls_count(Emulator *);
+bool emulator_add_map_call(Emulator*, int32_t, const char*, int32_t);
+bool emulator_remove_map_call(Emulator*, int32_t);
+bool emulator_update_map_call(Emulator*, int32_t, const char*, int32_t);
+int32_t* emulator_get_map_calls_codes(Emulator*, uint64_t*);
+char* emulator_get_map_call_name(Emulator*, int32_t code);
+int32_t emulator_get_map_call_addr(Emulator*, int32_t addr);
 Call emulator_last_call(Emulator *);
+void emulator_init_library(Emulator *);
 bool emulator_open_raw(Emulator *, uint8_t *, size_t);
 char *command_get_name(Emulator *, Command);
 void free_obj(void *);

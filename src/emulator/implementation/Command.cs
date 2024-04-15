@@ -79,23 +79,28 @@ namespace mtemu
             }
 
             string res = "";
-
+            bool m0 = GetFlag(FlagType.M0);
             switch (GetCommandView())
             {
                 case ViewType.MT_COMMAND:
-                    if (GetToType() == ToType.NO_LOAD)
+                    if (m0 && GetRawValue(WordType.I68) < 5)
                     {
-                        // Without saving
-                        res += "Y=F=";
+                        res += $"PPC[{GetRawValue(WordType.I68)}]=F=";
                     }
                     else
                     {
-                        string to = GetItem_(WordType.I68)[2] + "=";
-                        to = to.Replace("F/2=", "F/2;F=");
-                        to = to.Replace("2F=", "2F;F=");
-                        to = to.Replace(";", "; ");
-                        res += to;
+                        if (GetToType() == ToType.NO_LOAD)
+                                res += "Y=F=";
+                        else
+                        {
+                            string to = GetItem_(WordType.I68)[2] + "=";
+                            to = to.Replace("F/2=", "F/2;F=");
+                            to = to.Replace("2F=", "2F;F=");
+                            to = to.Replace(";", "; ");
+                            res += to;
+                        }
                     }
+
 
                     string command = GetItem_(WordType.I35)[2];
                     command = command.Replace("R", GetItem_(WordType.I02)[2]);

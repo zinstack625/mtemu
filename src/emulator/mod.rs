@@ -18,7 +18,9 @@
  */
 
 
-use libc;
+use std::collections::HashMap;
+
+use libc::{self, c_char};
 
 #[repr(C)]
 #[derive(Clone, Debug)]
@@ -61,10 +63,25 @@ impl Command {
     }
 }
 
+#[derive(Clone, Debug)]
 #[repr(C)]
 pub struct Call {
-    address_: i32,
-    comment_: *mut libc::c_char,
+    pub code_: i32,
+    pub arg0_: i32,
+    pub arg1_: i32,
+}
+
+#[derive(Clone, Debug)]
+pub struct LibCall {
+    pub code: i32,
+    pub name: String,
+    pub addr: i32,
+}
+
+impl LibCall {
+    pub fn new(code: i32, name: String, addr: i32) -> Self {
+        Self { code, name, addr }
+    }
 }
 
 #[repr(C)]
@@ -76,6 +93,7 @@ pub struct Emulator {
 #[link(name = "engine")]
 extern "C" {
     fn create_emulator() -> *mut Emulator;
+    fn clone_emulator(_: *const Emulator) -> *mut Emulator;
     fn destroy_emulator(_: *mut Emulator);
     fn emulator_reset(_: *mut Emulator);
     fn emulator_get_command(_: *mut Emulator, _: i32) -> Command;
@@ -122,11 +140,19 @@ extern "C" {
     fn emulator_update_call(_: *mut Emulator, _: i32, _: Call);
     fn emulator_remove_call(_: *mut Emulator, _: i32);
     fn emulator_calls_count(_: *mut Emulator) -> i32;
+    fn emulator_add_map_call(_: *mut Emulator, _: i32, _: *const libc::c_char, _: i32) -> bool;
+    fn emulator_remove_map_call(_: *mut Emulator, _: i32) -> bool;
+    fn emulator_update_map_call(_: *mut Emulator, _: i32, _: *const libc::c_char, _: i32) -> bool;
+    fn emulator_get_map_calls_codes(_: *mut Emulator, _: *mut u64) -> *mut i32;
+    fn emulator_get_map_call_name(_: *mut Emulator, _: i32) -> *mut libc::c_char;
+    fn emulator_get_map_call_addr(_: *mut Emulator, _: i32) -> i32;
+    fn emulator_init_library(_: *mut Emulator);
     fn emulator_last_call(_: *mut Emulator) -> Call;
     fn emulator_open_raw(_: *mut Emulator, _: *mut u8, _: libc::size_t) -> u8;
     fn emulator_export_raw(_: *mut Emulator, _: *mut *mut u8, _: *mut libc::size_t);
     fn command_get_name(_: *mut Emulator, _: Command) -> *mut libc::c_char;
     fn command_get_jump_name(_: *mut Emulator, _: Command) -> *mut libc::c_char;
+    fn emulator_swap(_: *mut Emulator, _: *mut Emulator);
     fn free_obj(_: *mut libc::c_void);
 }
 
@@ -180,9 +206,14 @@ pub trait MT1804Emulator {
     fn update_call(&mut self, index: usize, call: Call);
     fn remove_call(&mut self, index: usize);
     fn call_count(&self) -> usize;
+    fn add_map_call(&mut self, libcall: &LibCall);
+    fn remove_map_call(&mut self, code: i32);
+    fn update_map_call(&mut self, libcall: &LibCall);
+    fn get_map_calls(&self) -> Vec<LibCall>;
     fn last_call(&self) -> Call;
     fn open_raw(&mut self, bytes: &[u8]);
     fn export_raw(&self) -> Vec<u8>;
+    fn init_library(&self);
     fn command_get_name(&self, cmd: Command) -> String;
     fn command_get_jump_name(&self, cmd: Command) -> String;
     fn get_state(&self) -> State;
@@ -201,7 +232,18 @@ impl OriginalImplementation {
             }
         }
     }
+    pub fn swap(&mut self, oth: &mut OriginalImplementation) {
+        unsafe { emulator_swap(self.inst.as_mut().unwrap().to_owned(), oth.inst.as_mut().unwrap().to_owned()); }
+    }
+}
 
+impl Clone for OriginalImplementation {
+    fn clone(&self) -> Self {
+        match self.inst {
+            None => Self { inst: None },
+            Some(inst) => Self { inst: Some(unsafe { clone_emulator(inst) }) },
+        }
+    }
 }
 
 impl MT1804Emulator for OriginalImplementation {
@@ -418,6 +460,38 @@ impl MT1804Emulator for OriginalImplementation {
         unsafe { emulator_calls_count(self.inst.as_ref().unwrap().to_owned()) as usize }
     }
 
+    fn add_map_call(&mut self, libcall: &LibCall) {
+        let name = std::ffi::CString::new(libcall.name.as_str()).unwrap();
+        unsafe { emulator_add_map_call(self.inst.as_ref().unwrap().to_owned(), libcall.code, name.as_ptr(), libcall.addr); }
+    }
+
+    fn remove_map_call(&mut self, code: i32) {
+        unsafe { emulator_remove_map_call(self.inst.as_ref().unwrap().to_owned(), code as i32); }
+    }
+
+    fn update_map_call(&mut self, libcall: &LibCall) {
+        let name = std::ffi::CString::new(libcall.name.as_str()).unwrap();
+        unsafe { emulator_update_map_call(self.inst.as_ref().unwrap().to_owned(), libcall.code, name.as_ptr(), libcall.addr); }
+    }
+
+    fn get_map_calls(&self) -> Vec<LibCall> {
+        let mut calls_cnt: u64 = 0;
+        let calls = unsafe { emulator_get_map_calls_codes(self.inst.as_ref().unwrap().to_owned(), &mut calls_cnt) };
+        let mut callmap = Vec::<LibCall>::with_capacity(calls_cnt as usize);
+        for i in 0..calls_cnt {
+            let code = unsafe { calls.add(i as usize).read() };
+            let name = unsafe { emulator_get_map_call_name(self.inst.as_ref().unwrap().to_owned(), code) };
+            let name_stringified = String::from_utf8_lossy(unsafe { std::ffi::CStr::from_ptr(name).to_bytes() }).to_string();
+            unsafe {
+                free_obj(name as *mut libc::c_void);
+            }
+            let addr = unsafe { emulator_get_map_call_addr(self.inst.as_ref().unwrap().to_owned(), code) };
+            callmap.push(LibCall { code, name: name_stringified, addr });
+        }
+        unsafe { libc::free(calls as *mut libc::c_void); }
+        callmap
+    }
+
     fn last_call(&self) -> Call {
         unsafe { emulator_last_call(self.inst.as_ref().unwrap().to_owned()) }
     }
@@ -442,6 +516,9 @@ impl MT1804Emulator for OriginalImplementation {
         }
         unsafe { libc::free(bytes as *mut libc::c_void); }
         bytes_cpy
+    }
+    fn init_library(&self) {
+        unsafe { emulator_init_library(self.inst.as_ref().unwrap().to_owned()); }
     }
     fn command_get_name(&self, cmd: Command) -> String {
         let name = unsafe { command_get_name(self.inst.as_ref().unwrap().to_owned(), cmd) };

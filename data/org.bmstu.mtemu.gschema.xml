@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="mtemu">
 	<schema id="org.bmstu.mtemu" path="/org/bmstu/mtemu/">
+		<key name="backtrace-steps" type="u">
+			<default>100</default>
+			<summary>How many undo's are stored in the stack</summary>
+		</key>
 	</schema>
 </schemalist>

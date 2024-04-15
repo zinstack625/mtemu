@@ -8,30 +8,40 @@
     <property name="hexpand">true</property>
     <property name="resizable">false</property>
     <property name="content">
-      <object class="GtkScrolledWindow">
-        <property name="hexpand">true</property>
-        <property name="hscrollbar-policy">2</property>
-        <property name="vexpand">true</property>
-        <property name="propagate-natural-width">true</property>
-      <child>
-        <object class="GtkColumnView" id="stack_list">
-          <property name="vexpand">true</property>
-          <property name="reorderable">false</property>
-          <property name="show-row-separators">true</property>
-          <child>
-            <object class="GtkColumnViewColumn" id="stack_addr">
-              <property name="title">Address</property>
-              <property name="header-menu">stack_list_menu</property>
-            </object>
-          </child>
-          <child>
-            <object class="GtkColumnViewColumn" id="stack_pointer">
-              <property name="title">Value</property>
-              <property name="header-menu">stack_list_menu</property>
-            </object>
-          </child>
-        </object>
-      </child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="AdwHeaderBar" id="header_bar">
+            <property name="show-title">false</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="hexpand">true</property>
+            <property name="hscrollbar-policy">2</property>
+            <property name="vexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <child>
+              <object class="GtkColumnView" id="stack_list">
+                <property name="vexpand">true</property>
+                <property name="reorderable">false</property>
+                <property name="show-row-separators">true</property>
+                <child>
+                  <object class="GtkColumnViewColumn" id="stack_addr">
+                    <property name="title">Address</property>
+                    <property name="header-menu">stack_list_menu</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkColumnViewColumn" id="stack_pointer">
+                    <property name="title">Value</property>
+                    <property name="header-menu">stack_list_menu</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
       </object>
     </property>
   </template>

@@ -21,6 +21,7 @@ pub mod editor;
 use adw::subclass::prelude::*;
 
 use gtk::{gio, glib, prelude::ObjectExt};
+use crate::emulator::MT1804Emulator;
 
 mod imp {
     use std::cell::{Cell, RefCell};

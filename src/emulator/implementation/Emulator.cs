@@ -11,8 +11,8 @@ namespace mtemu
         private PortExtender portExtender_;
 
         private int prevPc_;
-        private int pc_;        // Pointer command
-        private int callIndex_;
+        private int pc_ = 0;        // Pointer command
+        private int callIndex_ = 0;
         private bool end_;
 
         private List<Command> commands_ = new List<Command>();
@@ -54,11 +54,30 @@ namespace mtemu
         private bool prevG_;
         private bool prevP_;
 
+        public Emulator Clone()
+        {
+            var clone = (Emulator)this.MemberwiseClone();
+            clone.memory_ = new int[this.memory_.Length];
+            Array.Copy(this.memory_, clone.memory_, this.memory_.Length);
+            clone.regCommon_ = new int[this.regCommon_.Length];
+            Array.Copy(this.regCommon_, clone.regCommon_, this.regCommon_.Length);
+            clone.stack_ = new int[this.stack_.Length];
+            Array.Copy(this.stack_, clone.stack_, this.stack_.Length);
+            clone.mapCalls_ = this.mapCalls_.ToDictionary(entry => entry.Key, entry => entry.Value);
+            clone.calls_ = new List<Call>();
+            foreach (var call in this.calls_)
+                clone.calls_.Add(call);
+            clone.commands_ = new List<Command>();
+            foreach (var command in this.commands_)
+                clone.commands_.Add(command);
+            return clone;
+        }
+
         public void Reset()
         {
             prevPc_ = -1;
             pc_ = -1;
-            callIndex_ = -1;
+            callIndex_ = 0;
             end_ = false;
 
             sp_ = 0;
@@ -92,12 +111,17 @@ namespace mtemu
             prevP_ = false;
         }
 
-        public Emulator(PortExtender portExtender)
+        public void InitLibrary()
         {
             InitCommands();
             InitCalls();
+            Reset();
+        }
+        public Emulator(PortExtender portExtender)
+        {
             portExtender_ = portExtender;
             Reset();
+            Console.WriteLine("Inited emulator");
         }
 
         private void InitCalls()
@@ -357,67 +381,16 @@ namespace mtemu
             switch (Current_().GetJumpType())
             {
                 case JumpType.END:
+                    // ++callIndex_;
+                    // callIndex_ %= 0x10000;A
                     if (calls_.Count <= 0 || calls_.Count <= callIndex_ )
                     {
                         end_ = true;
                         return;
-                    }
-                    Call call = calls_[callIndex_];
-                    if (call.GetAltCommandAddress())
-                    {
-                        RestoreFlags();
-
-                        switch (call.GetFlag())
-                        {
-                            case JumpType.JZ:
-                                if (prevZ_)
-                                {
-                                    callIndex_ = call.GetArg0();
-                                    break;
-                                }
-                                ++callIndex_;
-                                break;
-                            case JumpType.JC4:
-                                if (prevC4_)
-                                {
-                                    callIndex_ = call.GetArg0();
-                                    break;
-                                }
-                                ++callIndex_;
-                                break;
-                            case JumpType.JNZ:
-                                if (!prevZ_)
-                                {
-                                    callIndex_ = call.GetArg0();
-                                    break;
-                                }
-                                ++callIndex_;
-                                break;
-                            case JumpType.JSNC4:
-                                if (!prevC4_)
-                                {
-                                    callIndex_ = call.GetArg0();
-                                    break;
-                                }
-                                ++callIndex_;
-                                break;
-                            case JumpType.JMP:
-                                callIndex_ = call.GetArg0();
-                                break;
-                        }
-                    } 
-                    else
-                    {
-                        ++callIndex_;
-                    }
-
-                    if (calls_.Count > 0 && callIndex_ <= calls_.Count)
-                    {
-                        pc_ = GetAddrByCode(call.GetCode());
+                    } else {
+                        pc_ = GetAddrByCode(GetCall(callIndex_).GetCode());
                         return;
                     }
-                    end_ = true;
-                    return;
                 case JumpType.JMP:
                     pc_ = Current_().GetNextAddr();
                     return;
@@ -721,12 +694,30 @@ namespace mtemu
             switch (to)
             {
                 case ToType.F_IN_Q:
-                    regQ_ = f_;
+                    if (shift == ShiftType.CYCLE) {
+                        callIndex_ &= 0xfff0;
+                        callIndex_ |= (f_);
+                    } else {
+                        regQ_ = f_;
+                    }
                     break;
                 case ToType.NO_LOAD:
+                    if (shift == ShiftType.CYCLE) {
+                        callIndex_ &= 0xff0f;
+                        callIndex_ |= (f_ << 4);
+                    }
                     break;
                 case ToType.F_IN_B_AND_A_IN_Y:
+                    if (shift == ShiftType.CYCLE) {
+                        callIndex_ &= 0xf0ff;
+                        callIndex_ |= (f_ << 8);
+                    }
+                    break;
                 case ToType.F_IN_B:
+                    if (shift == ShiftType.CYCLE) {
+                        callIndex_ &= 0xfff;
+                        callIndex_ |= (f_ << 12);
+                    }
                     regCommon_[b] = f_;
                     break;
                 case ToType.SR_F_IN_B_AND_SR_Q_IN_Q:
@@ -1034,7 +1025,13 @@ namespace mtemu
 
         public ResultCode ExecOneCall()
         {
+            if (callIndex_ >= calls_.Count)
+                return ResultCode.End;
             int oldIndex = callIndex_;
+            Call call = GetCall(callIndex_);
+            memory_[0] = call.GetArg0();
+            memory_[1] = call.GetArg1();
+            pc_ = GetAddrByCode(call.GetCode());
             for (int i = 0; i < maxAutoCount_; ++i)
             {
                 ResultCode rc = ExecOne();
@@ -1042,8 +1039,13 @@ namespace mtemu
                 {
                     return rc;
                 }
-                if (Prev_().GetJumpType() == JumpType.END || callIndex_ != oldIndex || prevPc_ == pc_)
+                if (Prev_().GetJumpType() == JumpType.END || prevPc_ == pc_)
                 {
+                    if (oldIndex == callIndex_)
+                    {
+                        callIndex_++;
+                        callIndex_ %= 0x10000;
+                    }
                     return ResultCode.Ok;
                 }
             }
@@ -1084,6 +1086,11 @@ namespace mtemu
                 return -1;
             }
             return callIndex_;
+        }
+
+        public void SetCallIndex(int value)
+        {
+            callIndex_ = value;
         }
 
         public int SetPC(int value)
@@ -1213,42 +1220,55 @@ namespace mtemu
 
         public bool AddCall(int index, int code, int arg0, int arg1)
         {
-            if (!mapCalls_.ContainsKey(code)) return false;
-            if (arg0 > 0xff || arg1 > 0xff) return false;
-
+            Console.WriteLine("adding call " + index + "\t" + code);
+            if (!mapCalls_.ContainsKey(code))
+                return false;
+            if (arg0 > 0xff || arg1 > 0xff)
+                return false;
+            Console.WriteLine("adding call " + index + "\t" + code);
             Call call = new Call(code, arg0, arg1);
-            if (mapJumps_.ContainsKey(code))
-            {
-                switch (code)
-                {
-                    case 0:
-                        call = new Call(code, arg0, arg1, true, JumpType.JMP);
-                        break;
-                    case 1:
-                        call = new Call(code, arg0, arg1, true, JumpType.JC4);
-                        break;
-                    case 2:
-                        call = new Call(code, arg0, arg1, true, JumpType.JZ);
-                        break;
-                    case 3:
-                        call = new Call(code, arg0, arg1, true, JumpType.JSNC4);
-                        break;
-                    case 4:
-                        call = new Call(code, arg0, arg1, true, JumpType.JNZ);
-                        break;
-                }
-            }
+            // if (mapJumps_.ContainsKey(code))
+            // {
+            //     switch (code)
+            //     {
+            //         case 0:
+            //             call = new Call(code, arg0, arg1, true, JumpType.JMP);
+            //             break;
+            //         case 1:
+            //             call = new Call(code, arg0, arg1, true, JumpType.JC4);
+            //             break;
+            //         case 2:
+            //             call = new Call(code, arg0, arg1, true, JumpType.JZ);
+            //             break;
+            //         case 3:
+            //             call = new Call(code, arg0, arg1, true, JumpType.JSNC4);
+            //             break;
+            //         case 4:
+            //             call = new Call(code, arg0, arg1, true, JumpType.JNZ);
+            //             break;
+            //     }
+            // }
             calls_.Insert(index, call);
             return true;
         }
 
         public bool AddCall(int index, int code, int arg0, int arg1, bool altCommandAddress, JumpType flag)
         {
-            if (!mapCalls_.ContainsKey(code)) return false;
-            if (arg0 > 0xff || arg1 > 0xff) return false;
+            Console.WriteLine("Adding call");
+            if (!mapCalls_.ContainsKey(code))
+            {
+                Console.WriteLine("Invalid code");
+                return false;
+            }
+            if (arg0 > 0xff || arg1 > 0xff)
+            {
+                Console.WriteLine("Invalid args");
+                return false;
+            }
 
             Call call = new Call(code, arg0, arg1, altCommandAddress, flag);
             calls_.Insert(index, call);
+            Console.WriteLine("Added call");
             return true;
         }
         public bool UpdateCall(int index, int code, int arg0, int arg1)
@@ -1297,7 +1317,6 @@ namespace mtemu
         private bool CheckMapCall(int code, string name, int addr)
         {
             if (mapCalls_.ContainsKey(code)) return false;
-            if (code < 0x40 && code > 0xffff) return false;
 
             if (name.Length > Call.NAME_MAX_SIZE) return false;
             List<Tuple<string, int>> nameAddrList = new List<Tuple<string, int>>(mapCalls_.Values);
@@ -1337,9 +1356,28 @@ namespace mtemu
             return true;
         }
 
+        public string GetMapCallName(int code) {
+            foreach (var entry in mapCalls_)
+                Console.WriteLine("Have code " + entry.Key);
+            return mapCalls_[code].Item1;
+        }
+
+        public int GetMapCallAddr(int code) {
+            Console.WriteLine("For code " + code + " addr is " + mapCalls_[code].Item2);
+            return mapCalls_[code].Item2;
+        }
+
         public Dictionary<int, Tuple<string, int>> GetMapCall()
         {
             return mapCalls_;
+        }
+
+        public int[] GetMapCallsCodes()
+        {
+            int[] keys = new int[mapCalls_.Keys.Count];
+            var i = 0;
+            foreach (int key in mapCalls_.Keys) keys[i++] = key;
+            return keys;
         }
 
         private void SaveAsMtemu_(FileStream fstream)
@@ -1388,7 +1426,10 @@ namespace mtemu
                 }
                 string name = Encoding.UTF8.GetString(byte_name);
                 int addr = (input[seek++] << 8) + input[seek++];
-                if (!AddMapCall(code, name, addr)) return false;
+                if (!AddMapCall(code, name, addr)) {
+                    Console.WriteLine("Unable to add mapcall");
+                    return false;
+                }
             }
 
 
@@ -1408,6 +1449,7 @@ namespace mtemu
             commandsCount = (input[seek++] << 8) + input[seek++];
             if (seek + commandsCount * (commandSize_ + 1) > input.Length)
             {
+                Console.WriteLine("Incorrect Length: {0} + {1} * ({2} + 1) > {3}", seek, commandsCount, commandSize_, input.Length);
                 return false;
             }
 

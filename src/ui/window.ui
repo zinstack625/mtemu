@@ -13,7 +13,7 @@
               <object class="GtkSwitch" id="instr_repr_sw"></object>
             </child>
             <child type="end">
-              <object class="GtkMenuButton">
+              <object class="GtkMenuButton" id="primary_menu_button">
                 <property name="primary">True</property>
                 <property name="icon-name">open-menu-symbolic</property>
                 <property name="tooltip-text" translatable="yes">Menu</property>
@@ -58,6 +58,10 @@
   <menu id="primary_menu">
     <section>
       <item>
+        <attribute name="label" translatable="yes">_Undo</attribute>
+        <attribute name="action">app.undo</attribute>
+      </item>
+      <item>
         <attribute name="label" translatable="yes">_Open file</attribute>
         <attribute name="action">app.open-file</attribute>
       </item>
@@ -84,6 +88,10 @@
       <item>
         <attribute name="label" translatable="yes">_Show commands</attribute>
         <attribute name="action">app.show-commands</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Init library</attribute>
+        <attribute name="action">app.init-library</attribute>
       </item>
       <item>
         <attribute name="label" translatable="yes">_Preferences</attribute>

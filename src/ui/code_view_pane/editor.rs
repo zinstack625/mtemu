@@ -134,18 +134,19 @@ mod imp {
     impl BoxImpl for InstructionEditor {}
     impl InstructionEditor {
         fn limit_input_binary(&self) {
-            let limiter = closure_local!(move |field: gtk::Text, _inserted: String, _cnt: i32, _pos: glib::value::Value| {
-                let content = field.buffer().property::<String>("text").chars().filter(|c| { *c == '0' || *c == '1' }).collect::<String>();
-                field.buffer().set_property("text", &content);
-            });
-            self.addr.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.jump_type.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.load_type.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.op_type.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.instr_type.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.a_arg.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.b_arg.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
-            self.d_arg.delegate().unwrap().connect_closure("insert-text", true, limiter.clone());
+            let limiter = move |field: &gtk::Editable, inserted: &str, _: &mut i32| {
+                if inserted.chars().any(|c| { c != '0' && c != '1' }) {
+                    field.stop_signal_emission_by_name("insert-text");
+                }
+            };
+            self.addr.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.jump_type.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.load_type.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.op_type.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.instr_type.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.a_arg.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.b_arg.delegate().unwrap().connect_insert_text(limiter.clone());
+            self.d_arg.delegate().unwrap().connect_insert_text(limiter.clone());
         }
         pub fn get_codes(&self) -> [u8;10] {
             [

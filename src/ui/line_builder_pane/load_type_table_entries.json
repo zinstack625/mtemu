@@ -1,32 +1,40 @@
 [{
 	"ca": "000",
-	"load": "РQ=F"
+	"load": "РQ=F",
+    "load_m0": "CallCounterLL=F"
 },
 {
 	"ca": "001",
-	"load": "No load"
+	"load": "No load",
+    "load_m0": "CallCounterLH=F"
 },
 {
 	"ca": "010",
-	"load": "Y=РОН(A), РОН(B)=F"
+	"load": "Y=РОН(A), РОН(B)=F",
+    "load_m0": "CallCounterHL=F"
 },
 {
 	"ca": "011",
-	"load": "РОН(B)=F"
+	"load": "РОН(B)=F",
+    "load_m0": "CallCounterHH=F"
 },
 {
 	"ca": "100",
-	"load": "РQ=Q/2, РОН(B)=F/2"
+	"load": "РQ=Q/2, РОН(B)=F/2",
+    "load_m0": "РQ=Q/2, РОН(B)=F/2"
 },
 {
 	"ca": "101",
-	"load": "РОН(B)=F/2"
+	"load": "РОН(B)=F/2",
+    "load_m0": "РОН(B)=F/2"
 },
 {
 	"ca": "110",
-	"load": "РQ=2Q, РОН(B)=2F"
+    "load": "РQ=2Q, РОН(B)=2F",
+	"load_m0": "РQ=2Q, РОН(B)=2F"
 },
 {
 	"ca": "111",
-	"load": "РОН(B)=2F"
+	"load": "РОН(B)=2F",
+    "load_m0": "РОН(B)=2F"
 }]

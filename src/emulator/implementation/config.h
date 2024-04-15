@@ -1,1 +1,1 @@
-#define PKGDATADIR "/app/subdir"
+#define PKGDATADIR "/usr/local/subdir"
