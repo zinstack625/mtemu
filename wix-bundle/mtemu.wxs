@@ -1,0 +1,15 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package
+      Name="MTEmu"
+      Version="1.3.2"
+      UpgradeCode="c6011557-1622-46df-b858-da0f1cfb8691"
+      Manufacturer="BMSTU"
+      Compressed="yes">
+    <MediaTemplate EmbedCab="yes" />
+    <Directory SourceName="build">
+      <Directory SourceName="dest">
+	<Files Include="**" />
+      </Directory>
+    </Directory>
+  </Package>
+</Wix>
