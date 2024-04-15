@@ -17,6 +17,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#![windows_subsystem = "windows"]
+
 mod application;
 mod config;
 mod ui;

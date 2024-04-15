@@ -276,6 +276,9 @@ void init_command_methods(Emulator* in, MonoClass* command_class) {
 }
 
 Emulator* create_emulator() {
+#if defined (__WIN32__)
+  putenv("MONO_PATH=C:\\Program Files\\Mono\\lib\\mono\\4.5\\");
+#endif
   Emulator* instance = malloc(sizeof(Emulator));
   mono_config_parse (NULL);
   instance->dom = mono_jit_init("mtemu");
